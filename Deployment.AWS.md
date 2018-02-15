@@ -63,6 +63,8 @@ This section records all details that will facilitate configuration and maintena
    cd IMRT_Deployment/awsdev
    </pre>
    * Edit the configuration-service.yml file locally and set the GIT_PASSWORD, and ENCRYPT_KEY values. Do not check in these credentials!
+   * Edit the iis.yml file locally and set the SPRING_CLOUD_CONFIG_LABEL value. This should match the branch in the config repo that you want to use for this deployment.
+   * The value for itembank.accessToken in the ap-imrt-iis.yml file on the selected branch in the config repo must match the IAT Gitlab instance you are using, and must be encrypted with the ENCRYPT_KEY set for the configuration service.
    * Create the services
    <pre>
    kubectl create -f configuration-service.yml
