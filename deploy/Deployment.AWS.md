@@ -11,7 +11,6 @@ This section records all details that will facilitate configuration and maintena
 * Deployment Repository: https://gitlab.com/fairwaytech/IMRT_Deployment
 * Configuration Repository: 
     * URL: https://gitlab.com/fairwaytech/imrt-config-repo
-    * config user: TODO
 * AWS
     * AWS account: imrt-admin
     * Signin link: https://aws.amazon.com/console/
@@ -63,25 +62,47 @@ This section records all details that will facilitate configuration and maintena
    cd IMRT_Deployment/awsdev
    </pre>
    * Edit the configuration-service.yml file locally and set the GIT_PASSWORD, and ENCRYPT_KEY values. Do not check in these credentials!
-   * Edit the iis.yml file locally and set the SPRING_CLOUD_CONFIG_LABEL value. This should match the branch in the config repo that you want to use for this deployment.
-   * The value for itembank.accessToken in the ap-imrt-iis.yml file on the selected branch in the config repo must match the IAT Gitlab instance you are using, and must be encrypted with the ENCRYPT_KEY set for the configuration service.
-   * Create the services
+   * Create the configuration service
    <pre>
    kubectl create -f configuration-service.yml
+   </pre>
+   * Edit the iis.yml file locally and set the SPRING_CLOUD_CONFIG_LABEL value. This should match the branch in the config repo that you want to use for this deployment.
+   * The value for itembank.accessToken in the ap-imrt-iis.yml file on the selected branch in the config repo must match the IAT Gitlab instance you are using, and must be encrypted with the ENCRYPT_KEY set for the configuration service. You can encrpyt a value on the configuration service using kubectl like this (use kubectl get pods to get the pod name):
+   <pre>
+   kubectl exec configuration-deployment-778dbb5675-pcwc7 -c configuration -- curl http://localhost:8888/encrypt -d 'Test'
+   </pre>
+   * Create the other application services
+   <pre>
+   kubectl create -f rabbit.yml
    kubectl create -f iis.yml
    </pre>
+
 * Configure external ports
    * By default, kops opens the SSH port on all the EC2 instances in your cluster. I haven't found a way yet to get it not to do that, though I think this might be one method:  https://kubernetes.io/docs/concepts/services-networking/network-policies
    * If you want to shut down the ssh ports manually, you need to go into the AWS console, got to 'Services', 'EC2'. Find all the instances belonging to your cluster. For each instance, scroll all the way over to the right and click on their security group link. From here you can remove the rule for SSH access.
-   * The IIS application currently exposes its REST endpoint on port 30000, using a k8s NodePort configuration (see iis.yml). We may want to modify this in future to use a load balancer, which will almost certainly be required for ISS, but for now we just need to expose this port. Edit the master security group, and add a custom TCP Rule to allow inbound TCP traffic on port 30000.
-* Configure domain
-   * At this point, you can access the IIS REST endpoints using the public IP of any of the EC2 instances. However, if the cluster is modified or re-created in such a way that these IPs change, they all users will have to be notified, and eventually when we have the webhook support in, all the webhooks would have to be updated. To avoid this, we can map an FQDN to our master EC2 instance, which has port 30000 open on it. Then if something changes, we just have to update the mapping.
-   * For now we are just using the existing sbtds.org domain that has already been created. Using AWS console, select 'Services', 'Route 53', and then click on 'Hosted zones' option down the left hand side. Choose the sbtds.org domain, and click the 'Create Record Set' button at the top. From here you can create a record that maps from your domain (for example iis-awsdev.sbtds.org) to your master instance in EC2.
-   * Validate your mapping by using a browser or curl to hit the REST endpoints of IIS on port 30000:
+* Create nginx ingress and load balancer
    <pre>
-      curl http://iis-awsdev.sbtds.org:30000/info
+   kubectl create -f imrt-ingress.yml
+   kubectl create -f default-backend.yaml
+   kubectl create -f nginx-controller.yml
+   kubectl create -f load-balancer.yml
+   </pre>
+* Find the loadbalancer
+   * A loadbalancer has now been created in AWS. To find it, first use kubectl:
+   <pre>
+   kubectl describe service ingress-nginx --namespace kube-system
+   </pre>
+   From the response, look for a line like:
+   <pre>
+   LoadBalancer Ingress:     af909e7b316b511e8b7d50a62d3a6aa8-729550325.us-east-2.elb.amazonaws.com
+   </pre>
+* Configure domain
+   * For now we are just using the existing sbtds.org domain that has already been created. Using AWS console, select 'Services', 'Route 53', and then click on 'Hosted zones' option down the left hand side. Choose the sbtds.org domain, and click the 'Go to Record Sets' button at the top, followed by 'Create Record Set'. From here you can create a record that maps from your domain (for example iis-awsdev.sbtds.org) to your load balancer.
+   * Validate your mapping by using a browser or curl to hit the REST endpoints of IIS:
+   <pre>
+      curl https://iis-awsdev.sbtds.org:/info
       {"build":{"version":"0.1.11","artifact":"ap-imrt-iis","name":"ap-imrt-iis","group":"org.opentestsystem.ap","time":"2018-02-06 22:27:26+0000","by":"root"}}   </pre>
-   * NOTE: You will have to update the domain mapping any time the EC2 instance for the cluster master changes.
+   * NOTE: You will have to update the domain mapping any time the loadbalancer changes.
 
 ### Updating Applications
    * Updating applications is done via kubectrl, which requires that kubectrl is first configured to point to the cluster in question: <pre>kops export kubecfg --state s3://kops-imrt-dev-state-store --name dev.imrt.k8s.local</pre>
@@ -89,4 +110,7 @@ This section records all details that will facilitate configuration and maintena
    * When a new docker image version is available, it can be updated: <pre>kubectl set image deployment/ap-imrt-iis-deployment ap-imrt-iis=fwsbac/ap-imrt-iis:@version@
 #### Updating YML file
    * When changes are made to a YML file, they can be applied to the cluster: <pre>kubectl apply -f xxx-service.yml</pre>
+#### Updating SNAPSHOT image (no docker tag change) <pre>kubectl patch deployment ap-imrt-iis-deployment -p '{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"%s\"}}}}}'
+</pre>
+replacing %s with the current date in epoch format.
    
