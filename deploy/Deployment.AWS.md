@@ -63,20 +63,22 @@ This section records all details that will facilitate configuration and maintena
    </pre>
    * Edit the configuration-service.yml file locally and set the GIT_PASSWORD, and ENCRYPT_KEY values. Do not check in these credentials!
    * Create the configuration service
+   <pre>kubectl create -f configuration-service.yml</pre>
+   * Edit the rabbit-cluster.yml file and set the RABBITMQ_DEFAULT_PASS value. Do not check in these credentials!
+   * Create the rabbit cluster
    <pre>
-   kubectl create -f configuration-service.yml
+   kubectl create -f rabbitmq_rbac.yml
+   kubectl create -f rabbit-cluster.yml
    </pre>
-   * Edit the iis.yml file locally and set the SPRING_CLOUD_CONFIG_LABEL value. This should match the branch in the config repo that you want to use for this deployment.
+   * Wait until the rabbit pods are up, you can monitor them using kubectl get pods. You can monitor the rabbit management interface on the master node of your cluster, port 31672.
+   * Edit the iis.yml file locally and set the SPRING_CLOUD_CONFIG_LABEL value. This should match the branch in the config repo that you want to use for this deployment. 
    * The value for itembank.accessToken in the ap-imrt-iis.yml file on the selected branch in the config repo must match the IAT Gitlab instance you are using, and must be encrypted with the ENCRYPT_KEY set for the configuration service. You can encrpyt a value on the configuration service using kubectl like this (use kubectl get pods to get the pod name):
    <pre>
-   kubectl exec configuration-deployment-778dbb5675-pcwc7 -c configuration -- curl http://localhost:8888/encrypt -d 'Test'
+   kubectl exec configuration-deployment-778dbb5675-pcwc7 -- curl http://localhost:8888/encrypt -d 'Test'
    </pre>
+   * The value for spring.rabbitmq.password in the ap-imrt-iis.yml file on the selected branch in the config repo must match the rabbit password you set above, and must be encrypted with the ENCRYPT_KEY set for the configuration service. You can encrpyt a value on the configuration service as described above.
    * Create the other application services
-   <pre>
-   kubectl create -f rabbit.yml
-   kubectl create -f iis.yml
-   </pre>
-
+   <pre>kubectl create -f iis.yml</pre>
 * Configure external ports
    * By default, kops opens the SSH port on all the EC2 instances in your cluster. I haven't found a way yet to get it not to do that, though I think this might be one method:  https://kubernetes.io/docs/concepts/services-networking/network-policies
    * If you want to shut down the ssh ports manually, you need to go into the AWS console, got to 'Services', 'EC2'. Find all the instances belonging to your cluster. For each instance, scroll all the way over to the right and click on their security group link. From here you can remove the rule for SSH access.
