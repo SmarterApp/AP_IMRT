@@ -20,6 +20,10 @@ This section records all details that will facilitate configuration and maintena
     * domain: iis-awsdev.sbtds.org
 * SSH RSA Key
     * imrt-admin
+* Database
+    * instance name - imrt-db
+    * username - imrt_admin
+    * database name - imrt-db-dev
         
 ### Deployment Instructions
 * Install AWS CLI - https://docs.aws.amazon.com/cli/latest/userguide/installing.html
@@ -31,10 +35,10 @@ This section records all details that will facilitate configuration and maintena
 * Create versioned S3 bucket for storing configuration using console or CLI.
     <pre>aws s3 mb s3://kops-imrt-dev-state-store --region us-east-2</pre>
     <pre>aws s3api put-bucket-versioning --bucket kops-imrt-dev-state-store --versioning-configuration Status=Enabled</pre>
-* Create cluster. For the initial dev environment I used the new "Gossip" approach to avoid having to deal with DNS at all. I liked it! To use that, make sure you name ends with .k8s.local. This command sets up the configuration for the cluster, but don't let the name fool you, it doesn't actually create anything in AWS
+* Create cluster. For the initial dev environment I used the new "Gossip" approach to avoid having to deal with DNS at all. I liked it! To use that, make sure you name ends with .k8s.local. Make sure you provide at least 2 availability zones in the --zones argument, this is required to be able to add the database to the VPC that is created by kops. This command sets up the configuration for the cluster, but don't let the name fool you, it doesn't actually create anything in AWS
     <pre>
    kops create cluster \
-      --zones us-east-2c \
+      --zones us-east-2b,us-east-2c \
       --name dev.imrt.k8s.local \
       --state s3://kops-imrt-dev-state-store \
       --ssh-public-key="~/.ssh/imrt-admin.pub"
@@ -43,10 +47,10 @@ This section records all details that will facilitate configuration and maintena
    <pre>
    kops get instancegroups --name dev.imrt.k8s.local --state s3://kops-imrt-dev-state-store
    NAME			ROLE	MACHINETYPE	MIN	MAX	ZONES
-   master-us-east-2c	Master	t2.medium	1	1	us-east-2c
-   nodes			Node	t2.medium	2	2	us-east-2c
+   master-us-east-2c	Master	t2.medium	1	1	us-east-2b
+   nodes			Node	t2.medium	2	2	us-east-2b,us-east-2c
 
-   kops edit ig master-us-east-2c --name dev.imrt.k8s.local --state s3://kops-imrt-dev-state-store
+   kops edit ig master-us-east-2b --name dev.imrt.k8s.local --state s3://kops-imrt-dev-state-store
    kops edit ig nodes --name dev.imrt.k8s.local --state s3://kops-imrt-dev-state-store
    </pre>
 * Now you actually create the cluster in AWS. 
@@ -106,6 +110,24 @@ This section records all details that will facilitate configuration and maintena
       {"build":{"version":"0.1.11","artifact":"ap-imrt-iis","name":"ap-imrt-iis","group":"org.opentestsystem.ap","time":"2018-02-06 22:27:26+0000","by":"root"}}   </pre>
    * NOTE: You will have to update the domain mapping any time the loadbalancer changes.
 
+### Create the Database
+   * From the AWS Console, select RDS, Instances, Launch DB Instance
+   * Choose PostgreSQL
+   * Enter DB details, make sure you remember the username and password. 
+   * On the Advanced settings page
+      * For VPC, select the existing VPC for the cluster, for example dev.imrtlk8s.local
+      * For Subnet group info, select 'Create a new DB Subnet Group'
+      * For Public accessibility select 'Yes'
+      * For Availability zone select 'No preference'
+      * For VPC security groups select 'Create new VPC security group'
+      * For Database name select 'imrt'
+      * Leave defaults for the remaining choices
+   * Launch the instance. You will ned to monitor your DB instance until it finishes creating, then you should be able to find the endpoint. 
+   * Once the instance is running, you can test it by connecting from your development computer, for example:
+   <pre>psql --host=imrt-db-dev.cjqp2fdamfoh.us-east-2.rds.amazonaws.com --username imrt_admin --password --dbname=imrt</pre>
+   * Create the tables in the DB as described here: https://github.com/SmarterApp/AP_IMRT_Schema
+   * Create users - TBD when we actually have java code to access the DB
+   * Update security groups - TBD when we actually have java code to access the DB
 ### Updating Applications
    * Updating applications is done via kubectrl, which requires that kubectrl is first configured to point to the cluster in question: <pre>kops export kubecfg --state s3://kops-imrt-dev-state-store --name dev.imrt.k8s.local</pre>
 #### Updating Docker Image Version
