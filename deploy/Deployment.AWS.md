@@ -24,8 +24,31 @@ This section records all details that will facilitate configuration and maintena
     * instance name - imrt-db
     * username - imrt_admin
     * database name - imrt-db-dev
+* Graylog
+    * EC2 instance name - imrt-graylog-dev
         
 ### Deployment Instructions
+
+#### Create the Database
+   * From the AWS Console, select RDS, Instances, Launch DB Instance
+   * Choose PostgreSQL
+   * Enter DB details, make sure you remember the username and password. 
+   * On the Advanced settings page
+      * For VPC, select the existing VPC for the cluster, for example dev.imrtlk8s.local
+      * For Subnet group info, select 'Create a new DB Subnet Group'
+      * For Public accessibility select 'Yes'
+      * For Availability zone select 'No preference'
+      * For VPC security groups select 'Create new VPC security group'
+      * For Database name select 'imrt'
+      * Leave defaults for the remaining choices
+   * Launch the instance. You will ned to monitor your DB instance until it finishes creating, then you should be able to find the endpoint. 
+   * Once the instance is running, you can test it by connecting from your development computer, for example:
+   <pre>psql --host=imrt-db-dev.cjqp2fdamfoh.us-east-2.rds.amazonaws.com --username imrt_admin --password --dbname=imrt</pre>
+   * Create the tables in the DB as described here: https://github.com/SmarterApp/AP_IMRT_Schema
+   * Create users - TBD when we actually have java code to access the DB
+   * Update security groups - TBD when we actually have java code to access the DB
+   
+#### Deploy Kubernetes Cluster & Applications
 * Install AWS CLI - https://docs.aws.amazon.com/cli/latest/userguide/installing.html
 * Install KOPS CLI - https://github.com/kubernetes/kops/blob/master/docs/install.md
 * Create an IAM user in AWS if it doesn't already exist. It will need permissions as desribed here: https://github.com/kubernetes/kops/blob/master/docs/aws.md
@@ -110,24 +133,39 @@ This section records all details that will facilitate configuration and maintena
       {"build":{"version":"0.1.11","artifact":"ap-imrt-iis","name":"ap-imrt-iis","group":"org.opentestsystem.ap","time":"2018-02-06 22:27:26+0000","by":"root"}}   </pre>
    * NOTE: You will have to update the domain mapping any time the loadbalancer changes.
 
-### Create the Database
-   * From the AWS Console, select RDS, Instances, Launch DB Instance
-   * Choose PostgreSQL
-   * Enter DB details, make sure you remember the username and password. 
-   * On the Advanced settings page
-      * For VPC, select the existing VPC for the cluster, for example dev.imrtlk8s.local
-      * For Subnet group info, select 'Create a new DB Subnet Group'
-      * For Public accessibility select 'Yes'
-      * For Availability zone select 'No preference'
-      * For VPC security groups select 'Create new VPC security group'
-      * For Database name select 'imrt'
-      * Leave defaults for the remaining choices
-   * Launch the instance. You will ned to monitor your DB instance until it finishes creating, then you should be able to find the endpoint. 
-   * Once the instance is running, you can test it by connecting from your development computer, for example:
-   <pre>psql --host=imrt-db-dev.cjqp2fdamfoh.us-east-2.rds.amazonaws.com --username imrt_admin --password --dbname=imrt</pre>
-   * Create the tables in the DB as described here: https://github.com/SmarterApp/AP_IMRT_Schema
-   * Create users - TBD when we actually have java code to access the DB
-   * Update security groups - TBD when we actually have java code to access the DB
+#### Create the Graylog Server
+Graylog will be installed in AWS following the directions here: http://docs.graylog.org/en/2.4/pages/installation/aws.html
+
+* From the link, above, click on 'Select your AMI and AWS Region', and then choose the latest version and the region you are deploying to. This will launch a wizard to create an EC2 instance for the Graylog server
+    * Select t2.medium or larger, then "Next: Configure Instance Details"
+    * For network, select the VPC for the Kubernets cluster from the dropdown, for example dev.imrt.k8s.local
+    * For IAM role, create a new IAM role that has full EC2 access
+    * Select "Next: Add Storage"
+    * Select "Next: Add Tags"
+    * Select "Next: Configure Security Group"
+    * Create a new security group and give it a name, for example imrt-graylog-dev. For now you can just leave the ssh rule, this will be configured later on in the process.
+    * Select "Review and Launch"
+    * You will be prompted to supply an ssh key, you can select the same one used for creating the k8s cluster from the dropdown.
+* When the EC2 Instance comes up, ssh into it using the username "ubuntu" and the key you provided above.
+* Configure the server as described here: http://docs.graylog.org/en/2.4/pages/installation/aws.html. Stick to http for now, don't configure https. Use the default ports. Make sure you change the password for the web interface.
+* Configure the security group
+    * You should set up access to ports 80, 9000 from you own IP address, to be able to login to the web interface.
+    * Set up UDP access to port 12201 from the k8s nodes security group. This will allow logging from the nodes to reach the server. 
+* Login to the web interface and verify correct operation
+* Configure the domain
+    * From the AWS Console, select Route53, then Hosted zones.
+    * Choose the correct hosted zone (for example sbtds.org) and then Go to Record Sets
+    * Choose "Create Record Set". Give it a name like 'imrt-graylog-dev'
+    * Set the type to CNAME, and the Value to the domain name of your EC2 instance, for example ec2-18-219-212-106.us-east-2.compute.amazonaws.com.
+    * Verify that you can get the web interface using the new domain name you just created.
+* Point the IIS and ISS applications at the new graylog server
+    * Edit iis.yml and iss.yml and set the value for the GRAYLOG_HOST parameter to match the domain name you created above, for exampl imrt-graylog-dev.sbtds.org
+    * Redeploy the yml files
+    <pre>
+    kubectl apply -f iis.yml
+    kubectl apply -f iss.yml
+    </pre>
+* Verify that you see logs from both applications in the graylog web interface
 ### Updating Applications
    * Updating applications is done via kubectrl, which requires that kubectrl is first configured to point to the cluster in question: <pre>kops export kubecfg --state s3://kops-imrt-dev-state-store --name dev.imrt.k8s.local</pre>
 #### Updating Docker Image Version
