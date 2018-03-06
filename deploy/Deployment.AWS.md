@@ -44,9 +44,14 @@ This section records all details that will facilitate configuration and maintena
    * Launch the instance. You will ned to monitor your DB instance until it finishes creating, then you should be able to find the endpoint. 
    * Once the instance is running, you can test it by connecting from your development computer, for example:
    <pre>psql --host=imrt-db-dev.cjqp2fdamfoh.us-east-2.rds.amazonaws.com --username imrt_admin --password --dbname=imrt</pre>
-   * Create the tables in the DB as described here: https://github.com/SmarterApp/AP_IMRT_Schema
-   * Create users - TBD when we actually have java code to access the DB
-   * Update security groups - TBD when we actually have java code to access the DB
+   * Create users - Create 2 users, 'imrt_ingest' and 'imrt_search', with login permissions and passwords:
+   <pre>
+   imrt=> create role "imrt_search" LOGIN password 'XXX';
+   CREATE ROLE
+   imrt=> create role "imrt_ingest" LOGIN password 'YYY';
+   CREATE ROLE
+   </pre>
+   * Create the tables in the DB as described here: https://github.com/SmarterApp/AP_IMRT_Schema. This will also set privleges for the 2 users created above.
    
 #### Deploy Kubernetes Cluster & Applications
 * Install AWS CLI - https://docs.aws.amazon.com/cli/latest/userguide/installing.html
@@ -132,6 +137,10 @@ This section records all details that will facilitate configuration and maintena
       curl https://iis-awsdev.sbtds.org:/info
       {"build":{"version":"0.1.11","artifact":"ap-imrt-iis","name":"ap-imrt-iis","group":"org.opentestsystem.ap","time":"2018-02-06 22:27:26+0000","by":"root"}}   </pre>
    * NOTE: You will have to update the domain mapping any time the loadbalancer changes.
+* Update security groups to allow access from the kubernetes nodes running the applications to the database
+   * From the AWS console, got to RDS, then select the datbase instance created above
+   * Under the details section, click on the security group
+   * Create a new inbound rule, giving the k8s nodes access to port 5432
 
 #### Create the Graylog Server
 Graylog will be installed in AWS following the directions here: http://docs.graylog.org/en/2.4/pages/installation/aws.html
