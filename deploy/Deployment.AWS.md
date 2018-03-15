@@ -21,11 +21,24 @@ This section records all details that will facilitate configuration and maintena
 * SSH RSA Key
     * imrt-admin
 * Database
-    * instance name - imrt-db
+    * instance name - imrt-db-dev
     * username - imrt_admin
-    * database name - imrt-db-dev
+    * database name - imrt
 * Graylog
     * EC2 instance name - imrt-graylog-dev
+    
+#### QA Deployment Reference
+* AWS
+    * Region: us-east-2 (Ohio)
+    * domain: iis-awsqa.sbtds.org
+* SSH RSA Key
+    * imrt-admin
+* Database
+    * instance name - imrt-db-qa
+    * username - imrt_admin
+    * database name - imrt
+* Graylog
+    * EC2 instance name - imrt-graylog-qa
         
 ### Deployment Instructions
 
@@ -156,17 +169,19 @@ Graylog will be installed in AWS following the directions here: http://docs.gray
 * From the link, above, click on 'Select your AMI and AWS Region', and then choose the latest version and the region you are deploying to. This will launch a wizard to create an EC2 instance for the Graylog server
     * Select t2.medium or larger, then "Next: Configure Instance Details"
     * For network, select the VPC for the Kubernets cluster from the dropdown, for example dev.imrt.k8s.local
+    * For Auto-assign Public IP select "Enable"
     * For IAM role, create a new IAM role that has full EC2 access
     * Select "Next: Add Storage"
     * Select "Next: Add Tags"
     * Select "Next: Configure Security Group"
     * Create a new security group and give it a name, for example imrt-graylog-dev. For now you can just leave the ssh rule, this will be configured later on in the process.
-    * Select "Review and Launch"
+    * Select "Review and Launch", then "Launch"
     * You will be prompted to supply an ssh key, you can select the same one used for creating the k8s cluster from the dropdown.
+    * Click on the EC2 instance, and give it a name, for example "imrt-graylog-dev"
 * When the EC2 Instance comes up, ssh into it using the username "ubuntu" and the key you provided above.
 * Configure the server as described here: http://docs.graylog.org/en/2.4/pages/installation/aws.html. Stick to http for now, don't configure https. Use the default ports. Make sure you change the password for the web interface.
 * Configure the security group
-    * You should set up access to ports 80, 9000 from you own IP address, to be able to login to the web interface.
+    * You should set up access to ports 22, 80, 9000 from you own IP address, to be able to ssh in and to login to the web interface.
     * Set up UDP access to port 12201 from the k8s nodes security group. This will allow logging from the nodes to reach the server. 
 * Login to the web interface and verify correct operation
 * Configure the domain
