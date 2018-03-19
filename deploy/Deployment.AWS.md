@@ -198,6 +198,19 @@ Graylog will be installed in AWS following the directions here: http://docs.gray
     kubectl apply -f iss.yml
     </pre>
 * Verify that you see logs from both applications in the graylog web interface
+
+#### Create the IAT System Hook
+
+In order to receive notifications that projects have been added to the Item Bank in GitLab, a system hook must be installed.
+
+* Login to the GitLab instance associated with your deployment, for example https://gitlab-dev.smarterbalanced.org/. You must have enough permissions to create a system hook.
+* Select "Admin area" by clicking on the small wrench icon on the top right.
+* Select "System Hooks" from the set of tabs across the top of the Admin  Area
+* Enter the URL for the IIS interface, for example http://iis-awsdev.sbtds.org/systemHook
+* Make sure Push events and Enable SSL verification are selected
+* Click on Add system hook. You will see the hook listed at the bottom of the screen. You can select Test hook, and you should see something in the IIS logs, though it may result in an error or exception. This is just to test connectivity.
+
+
 ### Updating Applications
    * Updating applications is done via kubectrl, which requires that kubectrl is first configured to point to the cluster in question: <pre>kops export kubecfg --state s3://kops-imrt-dev-state-store --name dev.imrt.k8s.local</pre>
 #### Updating Docker Image Version
