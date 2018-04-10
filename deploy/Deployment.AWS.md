@@ -210,6 +210,14 @@ In order to receive notifications that projects have been added to the Item Bank
 * Make sure Push events and Enable SSL verification are selected
 * Click on Add system hook. You will see the hook listed at the bottom of the screen. You can select Test hook, and you should see something in the IIS logs, though it may result in an error or exception. This is just to test connectivity.
 
+#### Item Sync Job
+
+Once IMRT has been fully deployed, the database should be synchronized with the ItemBank. This can be done by performing a manual run of the item sync job.
+
+* Run 'kubectl get pods' to find the name of a pod that is running ap-imrt-iis-deployment
+* Manually execute the item sync job on that pod.<pre>kubectl exec ap-imrt-iis-deployment-xxx -- curl "http://localhost/sync"</pre>
+* Monitor the job using <pre>kubectl logs -f ap-imrt-iis-deployment-xxx</pre> and wait for it to complete.
+* Once the initial sync has completed, deploy the cron job to run it on a periodic basis. The yml file can be edited to modify the schedule as required.<pre>kubectl apply -f sync-cron.yml</pre>
 
 ### Updating Applications
    * Updating applications is done via kubectrl, which requires that kubectrl is first configured to point to the cluster in question: <pre>kops export kubecfg --state s3://kops-imrt-dev-state-store --name dev.imrt.k8s.local</pre>
