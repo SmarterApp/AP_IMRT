@@ -53,7 +53,7 @@ This section records all details that will facilitate configuration and maintena
 * Create versioned S3 bucket for storing configuration using console or CLI:
     <pre>aws s3 mb s3://kops-imrt-dev-state-store --region us-east-2</pre>
     <pre>aws s3api put-bucket-versioning --bucket kops-imrt-dev-state-store --versioning-configuration Status=Enabled</pre>
-* Create cluster. For the initial dev environment I used the new "Gossip" approach to avoid having to deal with DNS at all. I liked it! To use that, make sure you name ends with `.k8s.local`. Make sure you provide at least 2 availability zones in the `--zones` argument, this is required to be able to add the database to the VPC that is created by `kops`. This command sets up the configuration for the cluster, but don't let the name fool you, it doesn't actually create anything in AWS.
+* Create cluster. For the initial dev environment I used the new "Gossip" approach to avoid having to deal with DNS at all. I liked it! To use that, make sure your cluster name ends with `.k8s.local`. Make sure you provide at least 2 availability zones in the `--zones` argument, this is required to be able to add the database to the VPC that is created by `kops`. This command creates and stores the configuration for the cluster, but nothing is actually created in AWS.
     <pre>
    kops create cluster \
       --zones us-east-2b,us-east-2c \
@@ -157,71 +157,6 @@ outlined int the [AP\_IRMT\_Schema](https://github.com/SmarterApp/AP_IMRT_Schema
 #### Running Flyway Against the Aurora Postgres Cluster
 * Set the `url` to the **Cluster endpoint** value defined in the RDS dashboard
 * After Flyway's execution completes, the `imrt` schema should be replicated to the "read only" replica
-
-#### Verify Schema Creation
-Use the following steps to verify the `imrt` schema has been created on the cluster:
-
-* Connect to the **Cluster endpoint** and run the `\dt` command to view the tables in `imrt`.  An example is shown
-below:
-
-```
-psql -h [cluster endpoint host] -U imrt_admin imrt
-Password for user imrt_admin:
-psql (10.3, server 9.6.6)
-SSL connection (protocol: TLSv1.2, cipher: ECDHE-RSA-AES256-GCM-SHA384, bits: 256, compression: off)
-Type "help" for help.
-
-imrt=> \dt
-                     List of relations
- Schema |             Name             | Type  |   Owner
---------+------------------------------+-------+------------
- public | batch_job_execution          | table | imrt_admin
- public | batch_job_execution_context  | table | imrt_admin
- public | batch_job_execution_params   | table | imrt_admin
- public | batch_job_instance           | table | imrt_admin
- public | batch_step_execution         | table | imrt_admin
- public | batch_step_execution_context | table | imrt_admin
- public | flyway_schema_history        | table | imrt_admin
- public | item                         | table | imrt_admin
- public | item_git                     | table | imrt_admin
- public | item_log                     | table | imrt_admin
- public | project_lock                 | table | imrt_admin
- public | stim_link                    | table | imrt_admin
-(12 rows)
-
-imrt=> \q
-```
-
-* Connect to the **Reader endpoint** and run the `\dt` command to view the tables in `imrt`.  An example is shown
-below:
-
-```
-psql -h [reader endpoint host] -U imrt_admin imrt
-Password for user imrt_admin:
-psql (10.3, server 9.6.6)
-SSL connection (protocol: TLSv1.2, cipher: ECDHE-RSA-AES256-GCM-SHA384, bits: 256, compression: off)
-Type "help" for help.
-
-imrt=> \dt
-                     List of relations
- Schema |             Name             | Type  |   Owner
---------+------------------------------+-------+------------
- public | batch_job_execution          | table | imrt_admin
- public | batch_job_execution_context  | table | imrt_admin
- public | batch_job_execution_params   | table | imrt_admin
- public | batch_job_instance           | table | imrt_admin
- public | batch_step_execution         | table | imrt_admin
- public | batch_step_execution_context | table | imrt_admin
- public | flyway_schema_history        | table | imrt_admin
- public | item                         | table | imrt_admin
- public | item_git                     | table | imrt_admin
- public | item_log                     | table | imrt_admin
- public | project_lock                 | table | imrt_admin
- public | stim_link                    | table | imrt_admin
-(12 rows)
-
-imrt=> \q
-```
 
 ### Deploy And Configure Services
 * Install and configure services
@@ -370,23 +305,37 @@ replacing %s with the current date in epoch format.
 ### Creating SQL Logins for Business Intelligence Analysts
 To create logins for users to run ad hoc queries against the RDS Postgres Aurora cluster, take the following steps:
 
+#### Create a Role for Business Intelligence Analysts
 * Connect to the **master** of the Aurora Postgres cluster
 * Run the following SQL:
-  * be sure to replace `[choose user name]` with a user name that complies with your institution's standards
-  * be sure to replace `[choose a passowrd]` with a password that complies with your institution's standards
+  * be sure to replace `[choose role name]` with a user name that complies with your institution's standards
 
 ```sql
-CREATE ROLE [choose user name] LOGIN PASSWORD '[choose a password]';
+CREATE ROLE [choose role name];
+ALTER ROLE [choose role name] SET search_path TO imrt;
 
-GRANT SELECT ON item TO [choose user name];
-GRANT SELECT ON item_git TO [choose user name];
-GRANT SELECT ON item_log TO [choose user name];
-GRANT SELECT ON stim_link TO [choose user name];
+GRANT SELECT ON item TO [choose role name];
+GRANT SELECT ON item_git TO [choose role name];
+GRANT SELECT ON item_log TO [choose role name];
+GRANT SELECT ON stim_link TO [choose role name];
 ```
 
-This user will have the ability to:
+Any user in the role created above will have the ability to:
 
 * Read data from the tables in the `imrt` database that store item-related data
 * Create temporary tables to store interim query results, etc
 
 **NOTE:** Application-specific tables will not be available; these tables drive application functionality and will not provide data useful for reporting purposes.
+
+#### Create a Login for the Business Analyst
+* Connect to the **master** of the Aurora Postgres cluster
+* Run the following SQL:
+  * be sure to replace `[choose role name]` with a user name that complies with your institution's standards
+  * be sure to replace `[choose password]` with a password that complies with your institution's standards
+  * be sure to replace `[role name from previous step]` with the role created above
+
+```sql
+CREATE ROLE [choose role name] LOGIN PASSWORD '[choose password]';
+GRANT [role name from previous step] TO [choose role name];
+```
+
