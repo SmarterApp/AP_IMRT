@@ -112,16 +112,17 @@ The database that supports IMRT will be an Amazon Aurora Cluster using the Postg
 * Choose a database port (default is 5432)
 * Choose a **DB Parameter Group** appropriate for the chosen database engine (e.g. `default.aurora-postgresql9.6`)
 * Choose a **DB Cluster Parameter Group** appropriate for the chosen database cluster (e.g. `default.aurora-postgresql9.6`)
-* Decide whether to enable encryption (beyond the scope of this guide)
+* Decide whether to enable encryption based on your institution's policies 
+  * Managing database encryption is beyond the scope of this checklist
 * Failover:
   * choose priority (default is no preference)
-  * Tier 0 is highest, Tier 15 is lowest
+  * `Tier 0` is highest, `Tier 15` is lowest
 * Backup:
   * Choose a retention policy that complies with your institution's standards
 * Monitoring:
-  * disabled for IMRT, up to installer/deployer to enable
+  * This is optional; enable based on your institution's policy
 * Performance Insights:
-  * disabled for IMRT, up to installer/deployer to enable
+  * This is optional; enable based on your institution's policy
 * Maintenance:
   * Recommend **Enable auto minor version upgrade**, but choose an option that complies with your institution's standards.
   * If **Enable auto minor version upgrade** is enabled, select a maintenance window that complies with your institution's standards
@@ -238,7 +239,8 @@ imrt=> \q
    kubectl apply -f rabbitmq_rbac.yml
    kubectl apply -f rabbit-cluster.yml
    </pre>
-   * Wait until the rabbit pods are up, you can monitor them using `kubectl get po`. You can monitor the rabbit management interface on the master node of your cluster, port 31672.
+   * Wait until the rabbit pods are up, you can monitor them using `kubectl get po`. 
+   * You can monitor the rabbit management interface on the master node of your cluster, port 31672.
    * Edit the `iis.yml` and `iss.yml` files locally and set the `SPRING_CLOUD_CONFIG_LABEL` value.
      * This should match the branch in the config repo that you want to use for this deployment.
    * The value for `itembank.accessToken` in the `ap-imrt-iis.yml` file on the selected branch in the config repo must match the IAT Gitlab instance you are using, and must be encrypted with the `ENCRYPT_KEY` set for the configuration service. You can encrpyt a value on the configuration service using `kubectl` like this (use `kubectl get pods` to get the pod name):
@@ -386,4 +388,5 @@ This user will have the ability to:
 
 * Read data from the tables in the `imrt` database that store item-related data
 * Create temporary tables to store interim query results, etc
-**NOTE:** Application-specific tables will not be available; these tables drive application functionality and will not provide data useful for reporting purposes
+
+**NOTE:** Application-specific tables will not be available; these tables drive application functionality and will not provide data useful for reporting purposes.
