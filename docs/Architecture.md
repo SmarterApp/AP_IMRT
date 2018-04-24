@@ -1,3 +1,4 @@
 # IMRT Architecture
+This page describes the architecture/design of the various components/subsystems that comprise the IMRT application:
 
-**TODO - port confluence to here** 
+* [Item Synchronization Process](item-sync.md)
