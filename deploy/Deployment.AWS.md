@@ -15,6 +15,7 @@ This section records all details that will facilitate configuration and maintena
 * AWS
     * AWS account: imrt-admin
     * Signin link: https://aws.amazon.com/console/
+
 #### Development Deployment Reference
 * AWS
     * Region: us-east-2 (Ohio)
@@ -140,23 +141,92 @@ To view the cluster details, select the RDS **Clusters** dashboard.  From here, 
 
 _**OPTIONAL:**_ Rename the reader instance to something meaningful.  For example, `imrt-db-dev-aurora-us-east-2b` can be renamed to `imrt-db-dev-aurora-search` to indicate it is a replica intended to support the IMRT search API.  When making this change, be sure to select the **Apply Immediately** option if in a position to do so: this operation may incur downtime/service interruption while AWS makes the change.
 
+### Create Business Intelligence Replica
+To add another read-only replica to the Aurora Postgres cluster for business intelligence/reporting, take the following steps:
+
+* In the RDS dashboard, select **Instances**
+* Select the **master** RDS instance of the Aurora Postgres cluster
+  * The **master** RDS instance is identified with the **writer** role in the RDS cluster details dashboard
+* From the **Instance Actions** menu, select **Create Aurora Replica**
+* Network & Security:
+  * Choose an appropriate **Availability Zone**
+  * Make this instance **Publicly Accessible**
+* Encryption:
+  * By default, the same encryption setting as the cluster's **master** instance will be selected
+* Instance Specifications:
+  * Choose a **DB Instance Class** that is the appropriate size for your IMRT deployment
+  * `db.r4.large` is the minimum
+* Settings:
+  * Choose an **Aurora Replica Source**
+    * By default, the instance selected in the second step will be selected
+  * Provide a meaningful **DB instance identifier**
+* Failover:
+  * choose priority (default is no preference)
+  * Tier 0 is highest, Tier 15 is lowest
+* Backup:
+  * Choose a retention policy that complies with your institution's standards
+* Monitoring:
+  * disabled for IMRT, up to installer/deployer to enable
+* Performance Insights:
+  * disabled for IMRT, up to installer/deployer to enable
+* Maintenance:
+  * Recommend **Enable auto minor version upgrade**, but choose an option that complies with your institution's standards.
+  * If **Enable auto minor version upgrade** is enabled, select a maintenance window that complies with your institution's standards
+
 #### Update Security Groups
 * Once your instance is up, find the **Security groups** section and click on the security group.
   * Give the created group a name so it is easy to find in future, for example `imrt-dev-db`
   * Select the security group checkbox on the left, and you will see details at the bottom. Under **Inbound** there will be a rule already created for the IP of the computer used to create the database instance. If you want to connect from other IP addresses you will have to add rules for them here.
-* Create a new **Inbound Rule**, giving the k8s nodes access to port 5432. Select **Edit** -> **Add Rule**. Rule settings will be:
+* Create a new **Inbound Rule**, giving the k8s nodes access to port 5432 (or whatever port was chosen when the DB instance was created). Select **Edit** -> **Add Rule**. Rule settings will be:
   * Type = **Custom TCP**
-  * Port = **5432**
+  * Port = **5432** (or whatever port was chosen when the DB instance was created)
   * Source = **Custom**:  Start typing "nodes" in the address box. The security group for the nodes should come up as a suggestion that can be selected
   * Description = This field is optional, but recommended.  Provide a brief description of the inbound rule, e.g. "Kubernetes cluster group"
 
 #### Create the `imrt` Schema on the Cluster
 Now that the Aurora Postgres cluster has been created, the `imrt` database schema must be created.  Follow the steps
-outlined int the [AP\_IRMT\_Schema](https://github.com/SmarterApp/AP_IMRT_Schema) repository to create the required database objects (users, tables, etc).
+outlined in the [AP\_IRMT\_Schema](https://github.com/SmarterApp/AP_IMRT_Schema) repository to create the required database objects (users, tables, etc).
 
 #### Running Flyway Against the Aurora Postgres Cluster
 * Set the `url` to the **Cluster endpoint** value defined in the RDS dashboard
 * After Flyway's execution completes, the `imrt` schema should be replicated to the "read only" replica
+
+
+### Create the Graylog Server
+Graylog will be installed in AWS following the directions [here](http://docs.graylog.org/en/2.4/pages/installation/aws.html):
+
+* From the link, above, click on **Select your AMI and AWS Region**, and then choose the latest version and the region you are deploying to. This will launch a wizard to create an EC2 instance for the Graylog server
+    * Select `t2.medium` or larger, then **Next: Configure Instance Details**
+    * For network, select the VPC for the Kubernets cluster from the dropdown, for example `dev.imrt.k8s.local`
+    * For Auto-assign Public IP select **Enable**
+    * For IAM role, create a new IAM role that has full EC2 access
+    * Select **Next: Add Storage**
+    * Select **Next: Add Tags**
+    * Select **Next: Configure Security Group**
+    * Create a new security group and give it a name, for example `imrt-graylog-dev`. For now you can just leave the ssh rule, this will be configured later on in the process.
+    * Select **Review and Launch**
+    * Select **Launch**
+    * You will be prompted to supply an ssh key, you can select the same one used for creating the k8s cluster from the dropdown.
+    * Click on the EC2 instance, and give it a name, for example `imrt-graylog-dev`
+* When the EC2 Instance comes up, ssh into it using the username `ubuntu` and the key you provided above.
+* Configure the server as described [here](http://docs.graylog.org/en/2.4/pages/installation/aws.html). 
+  * Stick to `http` for now, don't configure `https` 
+  * Use the default ports
+  * Make sure you change the password for the web interface
+* Configure the security group
+    * The security group should allow access to ports 22, 80, 9000 from you own IP address, to be able to ssh in and to login to the web interface.
+    * Set up UDP access to port 12201 from the k8s nodes security group. This will allow logging from the nodes to reach the server.
+* Login to the web interface and verify correct operation
+
+#### Configure the Domain for the Graylog Server
+From the AWS Console:
+
+* Select **Services** -> **Route53**
+* Click on the **Hosted zones** option down the left hand sied
+* Choose the appropriate domain (e.g. `sbtds.org`) and click the **Go to Record Sets** button at the top
+* Click **Create Record Set** Give it a name like `imrt-graylog-dev`
+* Set the type to `CNAME`, and the **Value** to the domain name of your EC2 instance, for example `ec2-18-219-212-106.us-east-2.compute.amazonaws.com`.
+* Verify that you can get the web interface using the new domain name you just created.
 
 ### Deploy And Configure Services
 * Install and configure services
@@ -182,7 +252,10 @@ outlined int the [AP\_IRMT\_Schema](https://github.com/SmarterApp/AP_IMRT_Schema
    <pre>
    kubectl exec configuration-deployment-778dbb5675-pcwc7 -- curl http://localhost:8888/encrypt -d 'Test'
    </pre>
-   * The value for `spring.rabbitmq.password` in the `ap-imrt-iis.yml` file on the selected branch in the config repo must match the rabbit password you set above, and must be encrypted with the `ENCRYPT_KEY` set for the configuration service. You can encrpyt a value on the configuration service as described above.
+   * The value for `spring.rabbitmq.password` in the `ap-imrt-iis.yml` file on the selected branch in the config repo must match the rabbit password you set above, and must be encrypted with the `ENCRYPT_KEY` set for the configuration service. You can encrpyt a value on the configuration service as described above.  
+   * Point the IIS and ISS applications at the new graylog server
+     * Edit `iis.yml` and `iss.yml` and set the value for the `GRAYLOG_HOST` parameter to match the domain name you created above, for exampl `imrt-graylog-dev.sbtds.org`
+* Verify that you see logs from both applications in the graylog web interface
    * Create the other application services
    <pre>
      kubectl apply -f iis.yml
@@ -226,49 +299,53 @@ To provide external access to the IMRT applications with AWS Route53, follow the
       {"build":{"version":"0.1.11","artifact":"ap-imrt-iis","name":"ap-imrt-iis","group":"org.opentestsystem.ap","time":"2018-02-06 22:27:26+0000","by":"root"}}   </pre>
    * **NOTE:** You will have to update the domain mapping any time the loadbalancer changes.
 
-### Create the Graylog Server
-Graylog will be installed in AWS following the directions [here](http://docs.graylog.org/en/2.4/pages/installation/aws.html):
+<a name="configure-and-create-item-synchronization-cron-job"></a>
+### Configure and Create Item Synchronization Cron Job
+To ensure IMRT is up-to-date with the content stored in source control, the Item Synchronization Process should be configured to run at a regular interval.  To set up the cron job, follow these steps:
 
-* From the link, above, click on **Select your AMI and AWS Region**, and then choose the latest version and the region you are deploying to. This will launch a wizard to create an EC2 instance for the Graylog server
-    * Select `t2.medium` or larger, then **Next: Configure Instance Details**
-    * For network, select the VPC for the Kubernets cluster from the dropdown, for example `dev.imrt.k8s.local`
-    * For Auto-assign Public IP select **Enable**
-    * For IAM role, create a new IAM role that has full EC2 access
-    * Select **Next: Add Storage**
-    * Select **Next: Add Tags**
-    * Select **Next: Configure Security Group**
-    * Create a new security group and give it a name, for example `imrt-graylog-dev`. For now you can just leave the ssh rule, this will be configured later on in the process.
-    * Select **Review and Launch**
-    * Select **Launch**
-    * You will be prompted to supply an ssh key, you can select the same one used for creating the k8s cluster from the dropdown.
-    * Click on the EC2 instance, and give it a name, for example `imrt-graylog-dev`
-* When the EC2 Instance comes up, ssh into it using the username `ubuntu` and the key you provided above.
-* Configure the server as described [here](http://docs.graylog.org/en/2.4/pages/installation/aws.html). 
-  * Stick to `http` for now, don't configure `https` 
-  * Use the default ports
-  * Make sure you change the password for the web interface
-* Configure the security group
-    * The security group should allow access to ports 22, 80, 9000 from you own IP address, to be able to ssh in and to login to the web interface.
-    * Set up UDP access to port 12201 from the k8s nodes security group. This will allow logging from the nodes to reach the server.
-* Login to the web interface and verify correct operation
+* Open the `sync-cron.yml` file, which will appear similar to what is shown below:
 
-#### Configure the Domain
-From the AWS Console:
+  ```yaml
+  apiVersion: batch/v1beta1
+  kind: CronJob
+  metadata:
+    name: sync-job
+  spec:
+    # Schedule to run at 1:30 AM UTC (6:30 PM PST) each day
+    schedule: "30 1 ? * *"
+    jobTemplate:
+      spec:
+        template:
+          spec:
+            containers:
+            - name: ap-imrt-iis
+              image: fwsbac/ap-imrt-iis:0.1.26
+              imagePullPolicy: Always
+              command: ["./sync-job.sh"]
+            restartPolicy: Never
+  ```
+* Update the `schedule` value to match a time consistent with your institution's policies
+  * The schedule is configured using [Cron format](https://en.wikipedia.org/wiki/Cron#Overview) 
+  * Time is in UTC
+  * To minimize potential performance impact, the recommendation is to schedule the cron to execute once daily after production hours
+  * Additional details about cron jobs in Kubernetes environments can be found [here](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)
+* Update the `image` to match the Item Ingest Service (IIS) image that has been deployed
+  * To find the name of the IIS image: 
 
-* Select **Services** -> **Route53**
-* Click on the **Hosted zones** option down the left hand sied
-* Choose the appropriate domain (e.g. `sbtds.org`) and click the **Go to Record Sets** button at the top
-* Click **Create Record Set** Give it a name like `imrt-graylog-dev`
-* Set the type to `CNAME`, and the **Value** to the domain name of your EC2 instance, for example `ec2-18-219-212-106.us-east-2.compute.amazonaws.com`.
-* Verify that you can get the web interface using the new domain name you just created.
-* Point the IIS and ISS applications at the new graylog server
-    * Edit `iis.yml` and `iss.yml` and set the value for the `GRAYLOG_HOST` parameter to match the domain name you created above, for exampl `imrt-graylog-dev.sbtds.org`
-    * Redeploy the yml files
-    <pre>
-    kubectl apply -f iis.yml
-    kubectl apply -f iss.yml
-    </pre>
-* Verify that you see logs from both applications in the graylog web interface
+    ```
+    # identify the name of the pod hosting IIS
+    $ kubectl get po | grep iis
+    ap-imrt-iis-deployment-6f876df74-49rfv      1/1       Running     0          2d
+  
+    # Describe the IIS pod name and get the image name
+    $ kubectl describe po ap-imrt-iis-deployment-6f876df74-49rfv | grep -i image:
+        Image:          fwsbac/ap-imrt-iis:0.1.26
+    ```
+* Deploy the cron job to the Kubernetes environment:
+
+  ```
+  kubectl apply -f sync-cron.yml
+  ```
 
 ### Create the IAT System Hook
 
@@ -295,6 +372,8 @@ Once IMRT has been fully deployed, the database should be synchronized with the 
 
 #### Updating Docker Image Version
    * When a new docker image version is available, it can be updated: <pre>kubectl set image deployment/ap-imrt-iis-deployment ap-imrt-iis=fwsbac/ap-imrt-iis:@version@
+
+**NOTE:** When a new version of the IIS Docker image is deployed, update the `sync-cron.yml` file to use that new image.  See [here](#configure-and-create-item-synchronization-cron-job) for an example.
 
 #### Updating YML file
    * When changes are made to a YML file, they can be applied to the cluster: <pre>kubectl apply -f xxx-service.yml</pre>
