@@ -43,10 +43,19 @@ This section records all details that will facilitate configuration and maintena
     * EC2 instance name - imrt-graylog-qa
 
 ## Deployment Instructions
+> These deployment instructions were written and tested using **`kops 1.8.1`** and **`kubectl 1.8.12`**.  Using versions other than what is cited below may result in unpredictable results when standing up the cluster and/or deploying resources to it.
+
+### Pre-requisites
+* Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/installing.html)
+* Install `kops` and `kubectl` at the following versions:
+  * `kops`: [1.8.1](https://github.com/kubernetes/kops/releases/tag/1.8.1)
+  * `kubectl`: [1.8.12](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.8.md#v1812)
+
+#### Additional Links/Resources
+* [`kops` Installation Instructions](https://github.com/kubernetes/kops/blob/master/docs/install.md)
+* [`kubernetes` Documentation and Examples](https://kubernetes.io/docs/home/?path=users&persona=app-developer&level=foundational)
 
 ### Deploy Kubernetes Cluster
-* Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/installing.html)
-* Install [KOPS CLI](https://github.com/kubernetes/kops/blob/master/docs/install.md)
 * Create an IAM user in AWS if it doesn't already exist. This user will need permissions as desribed [here](https://github.com/kubernetes/kops/blob/master/docs/aws.md).
 * Configure AWS CLI for this user's access key and secret key (e.g. `imrt-admin`) using <pre>aws configure</pre>
 * Create an ssh key for the ops user to login to the cluster instances:
@@ -72,6 +81,141 @@ This section records all details that will facilitate configuration and maintena
    kops edit ig master-us-east-2b --name dev.imrt.k8s.local --state s3://kops-imrt-dev-state-store
    kops edit ig nodes --name dev.imrt.k8s.local --state s3://kops-imrt-dev-state-store
    </pre>
+   
+* Edit the cluster to prevent `kubectl` from creating containers with read-only volumes:
+  * Run `kops edit cluster $NAME` (where `$NAME` is the name of the cluster created in the previous step)
+  * An editor will open, displaying YAML that describes the configuration of your cluster:
+
+  ```yaml
+  # Please edit the object below. Lines beginning with a '#' will be ignored,
+  # and an empty file will abort the edit. If an error occurs while saving this file will be
+  # reopened with the relevant failures.
+  #
+  apiVersion: kops/v1alpha2
+  kind: Cluster
+  metadata:
+    creationTimestamp: 2018-02-26T19:25:25Z
+    name: imrt.example.k8s.local
+  spec:
+    api:
+      loadBalancer:
+        type: Public
+    authorization:
+      alwaysAllow: {}
+    channel: stable
+    cloudProvider: aws
+    configBase: s3://kops-example-imrt-state-store
+    etcdClusters:
+    - etcdMembers:
+      - instanceGroup: master-us-east-2b
+        name: b
+      name: main
+    - etcdMembers:
+      - instanceGroup: master-us-east-2b
+        name: b
+      name: events
+    iam:
+      allowContainerRegistry: true
+      legacy: false
+    kubernetesApiAccess:
+    - 0.0.0.0/0
+    kubernetesVersion: 1.8.6
+    masterInternalName: api.internal.imrt.exampel.k8s.local
+    masterPublicName: api.imrt.example.k8s.local
+    networkCIDR: 172.20.0.0/16
+    networking:
+      kubenet: {}
+    nonMasqueradeCIDR: 100.64.0.0/10
+    sshAccess:
+    - 0.0.0.0/0
+    subnets:
+    - cidr: 172.20.32.0/19
+      name: us-east-2b
+      type: Public
+      zone: us-east-2b
+    - cidr: 172.20.64.0/19
+      name: us-east-2c
+      type: Public
+      zone: us-east-2c
+    topology:
+      dns:
+        type: Public
+      masters: public
+      nodes: public
+  ```
+
+  * Add the following immediately after the `spec`, being careful to make sure the `kubelet` line is indented exactly two spaces below the `spec` line:
+
+  ```yaml
+  kubelet:
+    featureGates:
+      ReadOnlyAPIDataVolumes: "false"
+  ```
+
+  * **Exmaple** (observe the `kubelet` line immediately after the `spec` line):
+  
+  ```yaml
+  # Please edit the object below. Lines beginning with a '#' will be ignored,
+  # and an empty file will abort the edit. If an error occurs while saving this file will be
+  # reopened with the relevant failures.
+  #
+  apiVersion: kops/v1alpha2
+  kind: Cluster
+  metadata:
+    creationTimestamp: 2018-02-26T19:25:25Z
+    name: imrt.example.k8s.local
+  spec:
+     kubelet:
+      featureGates:
+        ReadOnlyAPIDataVolumes: "false"
+    api:
+      loadBalancer:
+        type: Public
+    authorization:
+      alwaysAllow: {}
+    channel: stable
+    cloudProvider: aws
+    configBase: s3://kops-example-imrt-state-store
+    etcdClusters:
+    - etcdMembers:
+      - instanceGroup: master-us-east-2b
+        name: b
+      name: main
+    - etcdMembers:
+      - instanceGroup: master-us-east-2b
+        name: b
+      name: events
+    iam:
+      allowContainerRegistry: true
+      legacy: false
+    kubernetesApiAccess:
+    - 0.0.0.0/0
+    kubernetesVersion: 1.8.6
+    masterInternalName: api.internal.imrt.exampel.k8s.local
+    masterPublicName: api.imrt.example.k8s.local
+    networkCIDR: 172.20.0.0/16
+    networking:
+      kubenet: {}
+    nonMasqueradeCIDR: 100.64.0.0/10
+    sshAccess:
+    - 0.0.0.0/0
+    subnets:
+    - cidr: 172.20.32.0/19
+      name: us-east-2b
+      type: Public
+      zone: us-east-2b
+    - cidr: 172.20.64.0/19
+      name: us-east-2c
+      type: Public
+      zone: us-east-2c
+    topology:
+      dns:
+        type: Public
+      masters: public
+      nodes: public
+  ```
+
+
 * Now you actually create the cluster in AWS.
    <pre>kops update cluster --name dev.imrt.k8s.local --state s3://kops-imrt-dev-state-store --yes</pre>
    This can take a really long time - 10 minutes up to an hour. Keep executing the validate command until you get a valid result
