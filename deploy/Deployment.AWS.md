@@ -67,8 +67,8 @@ This section records all details that will facilitate configuration and maintena
 
 ```
  kops create cluster \
-    --zones [comma-delimited list of availability zones] \
-    --name [name of cluster] \
+    --zones=[comma-delimited list of availability zones] \
+    --name=[name of cluster] \
     --dns-zone=[name of Route53 zone] \
     --ssh-public-key="~/.ssh/imrt-admin.pub"
 ```
@@ -77,8 +77,8 @@ This section records all details that will facilitate configuration and maintena
 
 ```
  kops create cluster \
-    --zones us-west-2a,us-west-2b \
-    --name dev.imrt.example.org \
+    --zones=us-west-2a,us-west-2b \
+    --name=dev.imrt.example.org \
     --dns-zone=example.org \
     --ssh-public-key="~/.ssh/imrt-admin.pub"
 ```
