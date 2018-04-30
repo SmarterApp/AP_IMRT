@@ -63,23 +63,35 @@ This section records all details that will facilitate configuration and maintena
 * Create versioned S3 bucket for storing configuration using console or CLI:
     <pre>aws s3 mb s3://kops-imrt-dev-state-store --region us-east-2</pre>
     <pre>aws s3api put-bucket-versioning --bucket kops-imrt-dev-state-store --versioning-configuration Status=Enabled</pre>
-* Create cluster. For the initial dev environment I used the new "Gossip" approach to avoid having to deal with DNS at all. I liked it! To use that, make sure your cluster name ends with `.k8s.local`. Make sure you provide at least 2 availability zones in the `--zones` argument, this is required to be able to add the database to the VPC that is created by `kops`. This command creates and stores the configuration for the cluster, but nothing is actually created in AWS.
-    <pre>
-   kops create cluster \
-      --zones us-east-2b,us-east-2c \
-      --name dev.imrt.k8s.local \
-      --state s3://kops-imrt-dev-state-store \
-      --ssh-public-key="~/.ssh/imrt-admin.pub"
-   </pre>
+* Create cluster configuration.  Make sure you provide at least 2 availability zones in the `--zones` argument, this is required to be able to add the database to the VPC that is created by `kops`. This command creates and stores the configuration for the cluster, but nothing is actually created in AWS.
+
+```
+ kops create cluster \
+    --zones [comma-delimited list of availability zones] \
+    --name [name of cluster] \
+    --dns-zone=[name of Route53 zone] \
+    --ssh-public-key="~/.ssh/imrt-admin.pub"
+```
+
+* **Example:**
+
+```
+ kops create cluster \
+    --zones us-west-2a,us-west-2b \
+    --name dev.imrt.example.org \
+    --dns-zone=example.org \
+    --ssh-public-key="~/.ssh/imrt-admin.pub"
+```
+
 * Edit the cluster configuration and change any desired settings, paying particular attention to the number of nodes and the size of the EC2 instances. For dev there are 2 "nodes" and one "master". You can find some documentation [here](https://github.com/kubernetes/kops/blob/master/docs/instance_groups.md).  Some useful commands are:
    <pre>
-   kops get instancegroups --name dev.imrt.k8s.local --state s3://kops-imrt-dev-state-store
+   kops get instancegroups --name dev.imrt.example.org --state s3://kops-imrt-dev-state-store
    NAME			ROLE	MACHINETYPE	MIN	MAX	ZONES
    master-us-east-2c	Master	t2.medium	1	1	us-east-2b
    nodes			Node	t2.medium	2	2	us-east-2b,us-east-2c
 
-   kops edit ig master-us-east-2b --name dev.imrt.k8s.local --state s3://kops-imrt-dev-state-store
-   kops edit ig nodes --name dev.imrt.k8s.local --state s3://kops-imrt-dev-state-store
+   kops edit ig master-us-east-2b --name dev.imrt.org --state s3://kops-imrt-dev-state-store
+   kops edit ig nodes --name dev.imrt.example.org --state s3://kops-imrt-dev-state-store
    </pre>
    
 * Edit the cluster to prevent `kubectl` from creating containers with read-only volumes:
@@ -95,7 +107,7 @@ This section records all details that will facilitate configuration and maintena
   kind: Cluster
   metadata:
     creationTimestamp: 2018-02-26T19:25:25Z
-    name: imrt.example.k8s.local
+    name: dev.imrt.example.org
   spec:
     api:
       loadBalancer:
@@ -120,8 +132,8 @@ This section records all details that will facilitate configuration and maintena
     kubernetesApiAccess:
     - 0.0.0.0/0
     kubernetesVersion: 1.8.6
-    masterInternalName: api.internal.imrt.exampel.k8s.local
-    masterPublicName: api.imrt.example.k8s.local
+    masterInternalName: api.internal.dev.imrt.example.org
+    masterPublicName: api.dev.imrt.example.org
     networkCIDR: 172.20.0.0/16
     networking:
       kubenet: {}
@@ -163,7 +175,7 @@ This section records all details that will facilitate configuration and maintena
   kind: Cluster
   metadata:
     creationTimestamp: 2018-02-26T19:25:25Z
-    name: imrt.example.k8s.local
+    name: dev.imrt.example.org
   spec:
      kubelet:
       featureGates:
@@ -191,8 +203,8 @@ This section records all details that will facilitate configuration and maintena
     kubernetesApiAccess:
     - 0.0.0.0/0
     kubernetesVersion: 1.8.6
-    masterInternalName: api.internal.imrt.exampel.k8s.local
-    masterPublicName: api.imrt.example.k8s.local
+    masterInternalName: api.internal.dev.imrt.example.org
+    masterPublicName: api.dev.imrt.example.org
     networkCIDR: 172.20.0.0/16
     networking:
       kubenet: {}
@@ -217,7 +229,7 @@ This section records all details that will facilitate configuration and maintena
 
 
 * Now you actually create the cluster in AWS.
-   <pre>kops update cluster --name dev.imrt.k8s.local --state s3://kops-imrt-dev-state-store --yes</pre>
+   <pre>kops update cluster --name dev.imrt.org --state s3://kops-imrt-dev-state-store --yes</pre>
    This can take a really long time - 10 minutes up to an hour. Keep executing the validate command until you get a valid result
    <pre>kops validate cluster</pre>
    At this point you can go and look in AWS console and see the EC2 instances that have been created for your cluster. You can also try out some kubectl commands to check things out: https://kubernetes.io/docs/reference/kubectl/cheatsheet/
@@ -341,7 +353,7 @@ Graylog will be installed in AWS following the directions [here](http://docs.gra
 
 * From the link, above, click on **Select your AMI and AWS Region**, and then choose the latest version and the region you are deploying to. This will launch a wizard to create an EC2 instance for the Graylog server
     * Select `t2.medium` or larger, then **Next: Configure Instance Details**
-    * For network, select the VPC for the Kubernets cluster from the dropdown, for example `dev.imrt.k8s.local`
+    * For network, select the VPC for the Kubernets cluster from the dropdown, for example `dev.imrt.org`
     * For Auto-assign Public IP select **Enable**
     * For IAM role, create a new IAM role that has full EC2 access
     * Select **Next: Add Storage**
@@ -512,7 +524,7 @@ Once IMRT has been fully deployed, the database should be synchronized with the 
 * Once the initial sync has completed, deploy the cron job to run it on a periodic basis. The yml file can be edited to modify the schedule as required.<pre>kubectl apply -f sync-cron.yml</pre>
 
 ## Updating Applications
-   * Updating applications is done via kubectl, which requires that kubectl is first configured to point to the cluster in question: <pre>kops export kubecfg --state s3://kops-imrt-dev-state-store --name dev.imrt.k8s.local</pre>
+   * Updating applications is done via kubectl, which requires that kubectl is first configured to point to the cluster in question: <pre>kops export kubecfg --state s3://kops-imrt-dev-state-store --name dev.imrt.org</pre>
 
 #### Updating Docker Image Version
    * When a new docker image version is available, it can be updated: <pre>kubectl set image deployment/ap-imrt-iis-deployment ap-imrt-iis=fwsbac/ap-imrt-iis:@version@
