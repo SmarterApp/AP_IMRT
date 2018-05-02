@@ -45,9 +45,6 @@ This section records all details that will facilitate configuration and maintena
 ## Deployment Instructions
 > These deployment instructions were written and tested using **`kops 1.9.0`** and **`kubectl 1.10.0`**.  Using versions other than what is cited below may result in unpredictable results when standing up the cluster and/or deploying resources to it.
 
-**Notes** 
-Fairway to provide links
-
 ### Pre-requisites
 * Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/installing.html)
 * Install `kops` and `kubectl` at the following versions:
@@ -90,6 +87,10 @@ Fairway to provide links
     --authorization=AlwaysAllow 
   
 ```
+
+* Edit the cluster configuration and change any desired settings, paying particular attention to the number of nodes, instance type and the size of the EC2 instances. For dev there are 2 "nodes" and one "master". You can find some documentation [here](https://github.com/kubernetes/kops/blob/master/docs/instance_groups.md).  
+
+>_**IMPORTANT:  When choosing a node size, avoid using `m3` AWS instance types.**  During deployments to AWS, using `m3.medium` AWS EC2 instances resulted in unpredictable behavior.  Additionally, the `m3.medium` instance type was not available for use in some AWS availability zones.  Consult AWS documentation for details on instance type availability._  
 
 * Edit the cluster configuration and change any desired settings, paying particular attention to the number of nodes and the size of the EC2 instances. For dev there are 2 "nodes" and one "master". You can find some documentation [here](https://github.com/kubernetes/kops/blob/master/docs/instance_groups.md).  Some useful commands are:
    <pre>
@@ -258,6 +259,45 @@ From the AWS Console:
 * Set the type to `CNAME`, and the **Value** to the domain name of your EC2 instance, for example `ec2-18-219-212-106.us-east-2.compute.amazonaws.com`.
 * Verify that you can get the web interface using the new domain name you just created.
 
+### Create GitLab User for IMRT Application
+The IIS component of the IMRT application relies on a GitLab user account to read data from GitLab.  To create a GitLab user with appropriate permissions, log into GitLab and create a new user account.
+
+#### Create Access Token
+To create an access token (used by IMRT to fetch data from GitLab via the GitLab API), follow these steps:
+
+* Log into GitLab with user account intended for IIS (the user account created in the previous step)
+* Choose **Settings** from the user menu
+* Choose **Access Tokens** menu
+* Provide a meaningful name for the token
+* Verify the access token is set to **Never expire**
+* Choose **Access API** for Scope
+* Click **Create Personal Access Token**
+* Add GitLab User to the correct group specified in the config
+* Make user an `auditor` member to provide read-only access to the content within the project group
+
+#### Grant Access to the Project Group in Itembank
+The IIS GitLab user account must have access to the GitLab project group that 
+
+* Navigate to **Groups**
+* Choose the right group (e.g. **iat-development**)
+* Identify the IIS GitLab user account
+* Click **Add Users to Group**
+
+#### Verify Access
+To verify the GitLab user is properly configured, the following command can be used:
+
+```
+curl -i --header "PRIVATE-TOKEN: [the access token of the IIS GitLab user]" https://[the GitLab domain]/api/v4/namespaces
+```
+
+If the access token is properly configured, the curl request will return a payload containing the list of namespaces available to the user.
+
+* **Example (from [GitLab API Documentation](https://docs.gitlab.com/ee/api/namespaces.html)):**
+
+  ```
+  curl -i --header "PRIVATE-TOKEN: 9koXpg98eAheJpvBs5tK" https://gitlab.example.com/api/v4/namespaces
+  ```
+
 ### Deploy And Configure Services
 * Install and configure services
    * Clone the deploment repository and change into the directory with the yml files you want to use
@@ -268,7 +308,11 @@ From the AWS Console:
    * Edit the `configuration-service.yml` file locally and set the `GIT_PASSWORD`, and `ENCRYPT_KEY` values. _**NOTE:**_ _Do not check in these credentials!_
    * Create the configuration service
    <pre>kubectl apply -f configuration-service.yml</pre>
-   * Edit the `rabbit-cluster.yml` file and set the `RABBITMQ_DEFAULT_PASS` value. _**NOTE:**_ _Do not check in these credentials!_
+   * Edit the `rabbit-cluster.yml` file and set the following: 
+     * `RABBITMQ_ERLANG_COOKIE` (this can be any alpha-numeric text value, avoid special characters)
+     * `RABBITMQ_DEFAULT_USER`
+     * `RABBITMQ_DEFAULT_PASS`
+     * _**NOTE:**_ _Do not check in these credentials!_
    * Create the rabbit cluster
    <pre>
    kubectl apply -f rabbitmq_rbac.yml
