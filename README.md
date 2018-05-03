@@ -8,9 +8,12 @@ Before updating resources in this project, please reference [Contributing](CONTR
 ## Document Links
 IMRT is a suite of applications. These documents provide additional information for understanding, deploying and maintaining them.
 
-1. Main README (this file)](README.md)
-1. [Architecture](docs/Architecture.md)
-1. [Deployment Checklist](deploy/Deployment.AWS.md)
+1. [Main README (this file)](README.md)
+2. [Architecture](docs/Architecture.md)
+3. [Deployment Checklist](deploy/Deployment.AWS.md)
+
+### Common Tasks
+[Delete an Item](common-tasks/delete-item.md) 
 
 
 ## License
