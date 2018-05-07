@@ -1,5 +1,7 @@
 # Item Synchronization Process
 
+[Go Back](Architecture.md)
+
 ## Overview
 The Item Synchronization Process is responsible for ensuring that the IMRT database (which the [Item Search Service](https://github.com/SmarterApp/AP_IMRT_ItemSearchService) relies on) reflects the item data stored in source control (e.g. GitLab).  The Item Synchronization Process iterates over every item (referred to as a "project" in GitLab) in source control and executes the ingest process for each one.  When the Item Synchronization Process is complete, the IMRT database will accurately reflect the items stored in source control.
 
