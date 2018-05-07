@@ -1,4 +1,7 @@
 # Delete an Item From IMRT
+
+[Go Back](../README.md)
+
 An item can be deleted in one of two ways:
 
 1. Delete the item from GitLab directly (either via the UI or an API call)
