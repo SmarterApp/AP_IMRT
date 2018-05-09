@@ -10,7 +10,9 @@ IMRT is a suite of applications. These documents provide additional information 
 
 1. [Main README (this file)](README.md)
 2. [Architecture](docs/Architecture.md)
-3. [Deployment Checklist](deploy/Deployment.AWS.md)
+3. [Deployment Checklist](docs/Deployment.AWS.md)
+4. [Kubernetes Deployment Files](docs/kubernetes_deployment_files.md)
+5. [IMRT Application Configuration files](docs/config_files.md)
 
 ### Common Tasks
 * [Delete an Item](docs/delete-item.md) 
