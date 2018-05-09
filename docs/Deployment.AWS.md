@@ -1,9 +1,13 @@
 # AWS Deployment for IMRT
 ## Table Of Contents
+* [Upgrading](#upgrading)
 * [Reference](#reference)
 * [Deployment Instructions](#deployment-instructions)
 * [Updating Applications](#updating-applications)
-* [Common Tasks](#common-tasks)
+
+<a name="reference"></a>
+## Upgrading
+If you are upgrading an existing system please first refer to the [Release Notes](release_notes.md) page to determine the proper upgrade path.  You will need to know the current version of the system prior to upgrade.
 
 <a name="reference"></a>
 ## Reference
@@ -44,6 +48,11 @@ This section records all details that will facilitate configuration and maintena
 
 ## Deployment Instructions
 > These deployment instructions were written and tested using **`kops 1.9.0`** and **`kubectl 1.10.0`**.  Using versions other than what is cited below may result in unpredictable results when standing up the cluster and/or deploying resources to it.
+
+### Upgrading Existing Deployments
+The steps below are for deploying IMRT to a new environment.  If this is upgrading an existing environment please refer to the release notes and general upgrade notes.
+
+[
 
 ### Pre-requisites
 * Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/installing.html)
@@ -456,43 +465,3 @@ Once IMRT has been fully deployed, the database should be synchronized with the 
 <pre>kubectl patch deployment ap-imrt-iis-deployment -p '{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"%s\"}}}}}'
 </pre>
 replacing %s with the current date in epoch format.
-
-## Common Tasks
-
-### Creating SQL Logins for Business Intelligence Analysts
-To create logins for users to run ad hoc queries against the RDS Postgres Aurora cluster, take the following steps:
-
-#### Create a Role for Business Intelligence Analysts
-* Connect to the **master** of the Aurora Postgres cluster
-* Run the following SQL:
-  * be sure to replace `[choose role name]` with a user name that complies with your institution's standards
-
-```sql
-CREATE ROLE [choose role name];
-ALTER ROLE [choose role name] SET search_path TO imrt;
-
-GRANT SELECT ON item TO [choose role name];
-GRANT SELECT ON item_git TO [choose role name];
-GRANT SELECT ON item_log TO [choose role name];
-GRANT SELECT ON stim_link TO [choose role name];
-```
-
-Any user in the role created above will have the ability to:
-
-* Read data from the tables in the `imrt` database that store item-related data
-* Create temporary tables to store interim query results, etc
-
-**NOTE:** Application-specific tables will not be available; these tables drive application functionality and will not provide data useful for reporting purposes.
-
-#### Create a Login for the Business Analyst
-* Connect to the **master** of the Aurora Postgres cluster
-* Run the following SQL:
-  * be sure to replace `[choose role name]` with a user name that complies with your institution's standards
-  * be sure to replace `[choose password]` with a password that complies with your institution's standards
-  * be sure to replace `[role name from previous step]` with the role created above
-
-```sql
-CREATE ROLE [choose role name] LOGIN PASSWORD '[choose password]';
-GRANT [role name from previous step] TO [choose role name];
-```
-
