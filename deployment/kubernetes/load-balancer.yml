@@ -1,0 +1,24 @@
+# Add a LoadBalancer service to access the nginx controller
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-nginx
+  namespace: kube-system
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "replace during deployment"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+    service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+  labels:
+    app: ingress-nginx
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      name: http
+      targetPort: http
+    - port: 443
+      name: https
+      targetPort: http
+  selector:
+    app: nginx-ingress-controller

@@ -1,0 +1,62 @@
+# Add a Service/Deployment for the AP_ItemMetadataReportingTool_ItemIngestService
+apiVersion: v1
+kind: Service
+metadata:
+  name: ap-imrt-iss-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: ap-imrt-iss
+    tier: backend
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ap-imrt-iss-deployment
+spec:
+  revisionHistoryLimit: 3
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 50%
+  template:
+    metadata:
+      labels:
+        app: ap-imrt-iss
+        tier: backend
+    spec:
+      containers:
+      - name: ap-imrt-iss
+        image: smarterbalanced/ap-imrt-iss:0.1.22
+        imagePullPolicy: Always
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8008
+            scheme: HTTP
+          periodSeconds: 30
+          timeoutSeconds: 10
+        resources:
+          requests:
+            cpu: 200m
+            memory: 1024M
+          limits:
+            cpu: 400m
+            memory: 2048M
+        env:
+        - name: GET_HOSTS_FROM
+          value: dns
+        - name: CONFIG_SERVICE_URL
+          value: "http://configuration-service"
+        - name: CONFIG_SERVICE_ENABLED
+          value: "true"
+        - name: SPRING_CLOUD_CONFIG_LABEL
+          value: "replace during deployment"
+        - name: GRAYLOG_HOST
+          value: "replace during deployment"
+        ports:
+        - containerPort: 8080

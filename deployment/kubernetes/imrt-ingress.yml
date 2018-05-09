@@ -1,0 +1,25 @@
+# Create an Ingress to allow external access to the IMRT services.
+# See https://kubernetes.io/docs/concepts/services-networking/ingress/
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: imrt-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: replace during deployment
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: ap-imrt-iis-service
+          servicePort: 80
+  - host: replace during deployment
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: ap-imrt-iss-service
+          servicePort: 80
