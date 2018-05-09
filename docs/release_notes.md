@@ -19,7 +19,7 @@ If you're not using source control one will want to make sure to backup the prev
 
 Depending on the changes it may not be possible to rollback a deployment.  In that case you may need to rebuild the system.  Please refer to the [Deployment Checklist](Deployment.AWS.md) on how to deploy a new system.
 
-If data is lost or the backup wasn't done all is not lost.  The IMRT ingest service can ingest all the items from scratch by leveraging the sync process.  This can be manually called and will ingest all the items in the configured itembank.
+If data is lost or the backup wasn't done all is not lost.  The IMRT ingest service can ingest all the items from scratch by leveraging the [item sync](item-sync.md) process.  This can be manually called and will ingest all the items in the configured itembank.
 
 ## Release Notes
 

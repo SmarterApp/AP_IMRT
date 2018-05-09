@@ -46,6 +46,7 @@ This configures IMRT's Item Ingest Service.
 **File Name:** iis.yml
 
 The properties are in the `env` section in the example file.
+
 | Property Name | Description | Example Value |
 | ------- | ---- | ----|
 | `SPRING_CLOUD_CONFIG_LABEL` | The branch containing the Spring Cloud configuration files. | `master` |

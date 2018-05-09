@@ -10,7 +10,7 @@ These include but are not limited to:
 * OpenAM authentication
 * Item Bank configuration
 
-These files should be hosted in a Github or Gitlab type server which can be accessed by these applications.  Our recommendation is to host them in a private repository though as seen in the deployment documents one can encrypt any information contained in the files.
+These files should be hosted in a Github or Gitlab type server which can be accessed by these applications.  Our recommendation is to host them in a private repository, as directed in the [deployment checklist](Deployment.AWS.md). In addition to being secured in a private repository, sensitive information can be encrypted via the [Spring CLI](https://cloud.spring.io/spring-cloud-cli/).
 
 These files are located in `deployment/config` directory within this project.  Files have the text (or something similar) "set during deployment" for anything that should be set by the deployer.
 
