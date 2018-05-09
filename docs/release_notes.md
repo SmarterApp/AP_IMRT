@@ -15,7 +15,7 @@ If you are using source control to manage deployment and configuration files the
 If you're not using source control one will want to make sure to backup the previous deployment/configuration files to a location so the system can be reconstructed using previous deployments.
 
 ## How to handle if one can't rollback?
-**Note** - This section covers deployments. One should always back up the database prior to upgrade so one can always go back to a version.. 
+**Note** - One should always back up the database prior to upgrade so one can always go back to a version.. 
 
 Depending on the changes it may not be possible to rollback a deployment.  In that case you may need to rebuild the system.  Please refer to the [Deployment Checklist](Deployment.AWS.md) on how to deploy a new system.
 
