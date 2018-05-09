@@ -1,7 +1,6 @@
 # AWS Deployment for IMRT
 ## Table Of Contents
 * [Upgrading](#upgrading)
-* [Reference](#reference)
 * [Deployment Instructions](#deployment-instructions)
 * [Updating Applications](#updating-applications)
 
@@ -9,50 +8,8 @@
 ## Upgrading
 If you are upgrading an existing system please first refer to the [Release Notes](release_notes.md) page to determine the proper upgrade path.  You will need to know the current version of the system prior to upgrade.
 
-<a name="reference"></a>
-## Reference
-This section records all details that will facilitate configuration and maintenance of the system.
-
-* Deployment Repository: https://gitlab.com/fairwaytech/IMRT_Deployment
-* Configuration Repository:
-    * URL: https://gitlab.com/fairwaytech/imrt-config-repo
-* AWS
-    * AWS account: imrt-admin
-    * Signin link: https://aws.amazon.com/console/
-
-#### Development Deployment Reference
-* AWS
-    * Region: us-east-2 (Ohio)
-    * domain: iis-awsdev.sbtds.org
-* SSH RSA Key
-    * imrt-admin
-* Database
-    * instance name - imrt-db-dev
-    * username - imrt_admin
-    * database name - imrt
-* Graylog
-    * EC2 instance name - imrt-graylog-dev
-
-### QA Deployment Reference
-* AWS
-    * Region: us-east-2 (Ohio)
-    * domain: iis-awsqa.sbtds.org
-* SSH RSA Key
-    * imrt-admin
-* Database
-    * instance name - imrt-db-qa
-    * username - imrt_admin
-    * database name - imrt
-* Graylog
-    * EC2 instance name - imrt-graylog-qa
-
 ## Deployment Instructions
 > These deployment instructions were written and tested using **`kops 1.9.0`** and **`kubectl 1.10.0`**.  Using versions other than what is cited below may result in unpredictable results when standing up the cluster and/or deploying resources to it.
-
-### Upgrading Existing Deployments
-The steps below are for deploying IMRT to a new environment.  If this is upgrading an existing environment please refer to the release notes and general upgrade notes.
-
-[
 
 ### Pre-requisites
 * Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/installing.html)
