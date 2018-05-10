@@ -1,0 +1,67 @@
+# Add a Service/Deployment for the Spring Cloud Configuration Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: configuration-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8888
+  selector:
+    app: configuration
+    tier: backend
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: configuration-deployment
+spec:
+  revisionHistoryLimit: 3
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 50%
+  template:
+    metadata:
+      labels:
+        app: configuration
+        tier: backend
+    spec:
+      containers:
+      - name: configuration
+        image: smarterblanced/configuration-service:3.1.0.RELEASE
+        readinessProbe:
+          httpGet:
+            path: /health.json
+            port: 8888
+            scheme: HTTP
+          periodSeconds: 30
+          timeoutSeconds: 10
+        resources:
+          requests:
+            cpu: 100m
+            memory: 250M
+          limits:
+            cpu: 200m
+            memory: 500M
+        env:
+        - name: GET_HOSTS_FROM
+          value: dns
+        - name: CONFIG_SERVICE_REPO
+          value: "replace during deployment"
+        - name: GIT_USER
+          value: "replace during deployment"
+        - name: GIT_PASSWORD
+          value: "replace during deployment"
+        - name: JAVA_OPTS
+          value: "-Xmx256m"
+        - name: ENCRYPT_KEY
+          value: "replace during deployment"
+        - name: SPRING_CLOUD_BUS_ENABLED
+          value: "false"
+        - name: MANAGEMENT_HEALTH_RABBIT_ENABLED
+          value: "false"
+        ports:
+        - containerPort: 8888

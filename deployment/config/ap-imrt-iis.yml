@@ -1,0 +1,27 @@
+management:
+  port: 8008
+  security:
+    enabled: "false"
+
+spring:
+  rabbitmq:
+    username: "set during deployment"
+    password: '{cipher}set during deployment'
+  datasource:
+    url: "jdbc:postgresql://<writeable db endpoint>:5432/imrt"
+    username: "imrt_ingest"
+    password: '{cipher}set during deployment'
+  batch:
+    job:
+      enabled: false # Prevent Spring from starting jobs on startup.
+    initialize-schema: "never" # Prevent Spring from creating the spring batch schema on startup.    
+
+itembank:
+  host: "${GITLAB_HOST:set during deployment}"
+  accessToken: '{cipher}gitlab access token for gitlab user'
+  group: "set during deployment"
+  webhookUrl: "https://<replace>/webHook"
+
+logging:
+  level:
+    org.opentestsystem: INFO

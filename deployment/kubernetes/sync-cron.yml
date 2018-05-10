@@ -1,0 +1,17 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: sync-job
+spec:
+  # Schedule to run at 5:30 AM UTC (10:30 PM PST) each day
+  schedule: "30 5 ? * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: ap-imrt-iis
+            image: smarterbalanced/ap-imrt-iis:0.1.26
+            imagePullPolicy: Always
+            command: ["./sync-job.sh"]
+          restartPolicy: Never

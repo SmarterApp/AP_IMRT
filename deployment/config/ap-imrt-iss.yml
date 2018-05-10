@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: "jdbc:postgresql://imrt-stage-aurora-us-east-2b.cjqp2fdamfoh.us-east-2.rds.amazonaws.com:5432/imrt"
+    username: imrt_search
+    password: '{cipher}dc183fb6ecd543f470b511ef6498c6aea25e6f69a89242f923c5fe5daeed000a'
+
+management:
+  port: 8008
+  security:
+    enabled: "false"
+
+logging:
+  level:
+    org.opentestsystem: INFO
+
+openam:
+    checkTokenEndpointUrl: https://sso-deployment.sbtds.org/auth/oauth2/tokeninfo
