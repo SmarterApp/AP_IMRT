@@ -41,13 +41,14 @@ New deployments should leverage the [Deployment Checklist](Deployment.AWS.md) to
 
 | Release Location | Version | Notes |
 | ----- | ----- | ---- |
-|  |  | The attached `AP_IMRT_Schema.jar` should be used to configure the schema |
-| |  | This docker version should be used in deployment files for ingest service and sync cron| 
-| |  | This docker version should be used in deployment files for search service| 
+| [0.1.1 Release](https://github.com/SmarterApp/AP_IMRT_Schema/releases/tag/0.1.1) | 0.1.1 | The attached `AP_IMRT_Schema.jar` should be used to configure the schema |
+| [0.1.30 Image](https://hub.docker.com/r/smarterbalanced/ap-imrt-iis/tags/)| 0.1.30 | This docker version should be used in deployment files for ingest service and sync cron| 
+| [0.1.27 Image](https://hub.docker.com/r/smarterbalanced/ap-imrt-iss/tags/) | 0.1.27 | This docker version should be used in deployment files for search service| 
 
 #### Update Notes
 These notes should be used if upgrading IMRT from 0.1.0 to 0.1.1.  As mentioned above one should back up the database before proceeding.
 
 1. Run the IMRT Schema Jar using the jar attached to the schema release in the table above.
+	2. The schema migration should be moved to 12.  You can check this looking at the schema migration table. (TODO - provide notes or link)
 2. Update your IIS (iis.yml in deployment files) deployment's release version to the docker version used above.  
 3. Update your ISS (iss.yml in the deployment files) deployment's release version to the docker version used above.
