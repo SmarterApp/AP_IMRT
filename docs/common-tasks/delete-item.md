@@ -1,6 +1,6 @@
-# Delete an Item From IMRT
-
 [Go Back](../../README.md)
+
+# Delete an Item From IMRT
 
 An item can be deleted in one of two ways:
 
@@ -13,7 +13,7 @@ After the item has been removed from GitLab, it must also be deleted from the IM
 
 1. Get the item identifier of the item that was deleted.  The screenshot below shows where the item identifier can be found in the IAT UI: 
 
-	![IAT item identifier location](../assets/images/iat-item-id-location.png)
+	![IAT item identifier location](../../assets/images/iat-item-id-location.png)
 2. In the SQL below, replace `[item to delete]` on line 2 with the item identifier:
 
 	```sql

@@ -1,6 +1,8 @@
-## Troubleshooting
+[Go Back](../../README.md)
 
-### Diagnosing Issues
+# Troubleshooting
+
+## Diagnosing Issues
 If the Item Synchronization Process encounters an exception, the job execution's status will be set to **FAILED** in the `batch_job_execution` table.  Furthermore, the exception message and stack trace will be recorded in the `exit_message` column of the `batch_job_execution` table.  To view the exception message and stack trace, execute the following SQL:
 
 ```sql
@@ -16,7 +18,7 @@ WHERE
 
 **NOTE:** when using pgAdmin, the stack trace may not be visible in the results field (possibly due to not handling carriage returns/line feeds properly).  If using [pgAdmin](https://www.pgadmin.org/download/), try using `psql` to execute the SQL cited above.
 
-### Resetting the Job
+## Resetting the Job
 The Item Synchronization Process job may occasionally fail before completing.  For example, the Kubernetes pod hosting the process is restarted before the Item Synchronization Process job finishes.  If this happens, the Spring Batch metadata tables will indicate the job is still in progress.  The SQL below can be used to identify and update the job step and job execution that are not completed:
 
 ***NOTE:***  Perform a backup of the `imrt` database prior to executing _any_ of the `UPDATE` or `DELETE` statements below.

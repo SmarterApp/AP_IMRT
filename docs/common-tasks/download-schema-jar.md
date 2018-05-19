@@ -5,7 +5,7 @@
 The `AP_IMRT_Schema.jar` is used to update the IMRT database to the latest version of the schema.  Details of the **AP_IMRT_Schema** project can be found [here](https://github.com/SmarterApp/AP_IMRT_Schema).
 
 ## Finding the Correct Release
-To identify the correct `AP_IMRT_Schema.jar` file, look at the [Release Notes](../release_notes.md) page for the version of IMRT being deployed.
+To identify the correct `AP_IMRT_Schema.jar` file, look at the [Release Notes](../release_notes.md) page for the version of IMRT being deployed.  All releases of the `AP_IMRT_Schema.jar` can be found [here](https://github.com/SmarterApp/AP_IMRT_Schema/releases).
 
 ## Downloading the Correct `AP_IMRT_Schema.jar` Release
 To easily download the correct `AP_IMRT_Schema.jar`, take the following steps:
