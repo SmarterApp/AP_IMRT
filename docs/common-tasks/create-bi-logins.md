@@ -1,6 +1,7 @@
+# Creating SQL Logins for Business Intelligence Analysts
+
 [Go Back](../../README.md)
 
-# Creating SQL Logins for Business Intelligence Analysts
 To create logins for users to run ad hoc queries against the RDS Postgres Aurora cluster, take the following steps:
 
 #### Create a Role for Business Intelligence Analysts

@@ -1,6 +1,7 @@
+# Execution
+
 [Go Back](../../README.md)
 
-## Execution
 To execute the Item Synchronization Process, create a `POST` call to the `/sync` endpoint of the Item Ingest Service.  An example of such a call is shown below:
 
 ```
@@ -9,7 +10,7 @@ curl -i -X POST "http://ap-imrt-iis-service/sync"
 
 The call shown above uses the name of the Item Ingest Service that Kubernetes recognizes.  That is, the IMRT Kubernetes environment has a service named `ap-imrt-iis-service`.  For additional details on Kubernetes services, refer to [this page](https://kubernetes.io/docs/concepts/services-networking/service/).  To execute the Item Synchronization Process from outside the IMRT Kubernetes environment, refer to the next section.
 
-### Execution Outside of the Kubernetes Environment
+## Execution Outside of the Kubernetes Environment
 The item synchronization process can be called from outside the Kubernetes environment, follow these steps:
 
 * Get a bearer token from OpenAM:
@@ -49,7 +50,7 @@ Example:
 curl -i -X POST -H "Authorization: Bearer a-bearer-token-uuid" "http://imrt-example.com/sync"
 ```
 
-### Automating Item Synchronization Process Execution
+## Automating Item Synchronization Process Execution
 The Item Synchronization Process can be scheduled to run at regular intervals (e.g. nightly after regular production hours).  A cron job can be created in the IMRT Kubernetes environment.  Shown below is an example of a cron job that configures the Item Synchronization Process at 9:00 AM UTC:
 
 ```yaml
@@ -62,7 +63,7 @@ spec:
   schedule: "0 9 * * *"
 ```
 
-## Monitoring
+# Monitoring
 The item synchronization process writes information about its progres to the application's log file.  To monitor the item synchronization process as it runs, take the following steps, tail the log file on the Item Ingest Service pod in the Kubernetes cluster:
 
 * Identify the Item Ingest Service pod:

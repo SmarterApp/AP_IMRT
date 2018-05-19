@@ -1,6 +1,6 @@
-[Go Back](../../README.md)
-
 # Troubleshooting
+
+[Go Back](../../README.md)
 
 ## Diagnosing Issues
 If the Item Synchronization Process encounters an exception, the job execution's status will be set to **FAILED** in the `batch_job_execution` table.  Furthermore, the exception message and stack trace will be recorded in the `exit_message` column of the `batch_job_execution` table.  To view the exception message and stack trace, execute the following SQL:
