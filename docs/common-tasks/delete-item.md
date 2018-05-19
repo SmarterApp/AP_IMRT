@@ -1,6 +1,6 @@
 # Delete an Item From IMRT
 
-[Go Back](../README.md)
+[Go Back](../../README.md)
 
 An item can be deleted in one of two ways:
 
