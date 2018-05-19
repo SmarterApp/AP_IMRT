@@ -21,7 +21,7 @@ IMRT is a suite of applications. These documents provide additional information 
 * [Download AP_IMRT_Schema.jar](docs/common-tasks/download-schema-jar.md)
 
 #### Item Synchronization Process
-* [Execution](docs/common-tasks/item-sync-execution.md)
+* [Execution and Monitoring](docs/common-tasks/item-sync-execution.md)
 * [Troubleshooting](docs/common-tasks/item-sync-troubleshooting.md)
 
 
