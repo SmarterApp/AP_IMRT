@@ -10,7 +10,7 @@ To create logins for users to run ad hoc queries against the RDS Postgres Aurora
 
 ```sql
 CREATE ROLE [choose role name];
-ALTER ROLE [choose role name] SET search_path TO imrt;
+ALTER ROLE [choose role name] SET search_path TO imrt,public;
 
 GRANT SELECT ON item TO [choose role name];
 GRANT SELECT ON item_git TO [choose role name];
