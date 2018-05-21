@@ -16,8 +16,13 @@ IMRT is a suite of applications. These documents provide additional information 
 6. [Release Notes](docs/release_notes.md)
 
 ### Common Tasks
-* [Delete an Item](docs/delete-item.md) 
-* [Create BI logins to database](docs/create_bi_logins.md)
+* [Delete an Item](docs/common-tasks/delete-item.md) 
+* [Create BI logins to database](docs/common-tasks/create-bi-logins.md)
+* [Download AP_IMRT_Schema.jar](docs/common-tasks/download-schema-jar.md)
+
+#### Item Synchronization Process
+* [Execution and Monitoring](docs/common-tasks/item-sync-execution.md)
+* [Troubleshooting](docs/common-tasks/item-sync-troubleshooting.md)
 
 
 ## License
