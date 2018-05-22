@@ -9,6 +9,6 @@ When Graylog receives messages from a Kubernetes (k8s) environment, the name of 
 * In the **Search Terms** field (identified by placeholder text starting with `Type your search query here and press enter`), enter the following:
   * `source: [the partial name of the name of your k8s logging daemonset]`
   * e.g.: `source: imrt-dev*`
-    * Note the asterisk at the end of the search term.
+    * Note the asterisk at the end of the search term.  This will account for the unique name k8s assigns to the logging daemonset after the name.
 * Click the green **Search** button
 * _**OPTIONAL:**_  To force the Graylog user interface to automatically refresh, change the **Not Updating** dropdown list to a value that suits your refresh needs (e.g. `Every 5 seconds`, `Every 1 Minute`)
