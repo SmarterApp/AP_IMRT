@@ -325,6 +325,77 @@ If the access token is properly configured, the curl request will return a paylo
    LoadBalancer Ingress:     af909e7b316b511e8b7d50a62d3a6aa8-729550325.us-east-2.elb.amazonaws.com
    </pre>
 
+#### Configure the GELF Logging Daemonset for Kubernetes
+* Open the `fluentd-gelf-logging.yml` in an editor and update the following lines:
+  * `name`:  Replace the `[replace ]` with a name that is meaningful and easy to identify when filtering in Graylog.  This value will appear as the "source" in Graylog messages.  Whatever you decide, be consistent between environments to simplify Graylog filtering.
+    * Examples:  `imrt-dev` for a development environment, `imrt-production` for a production environment
+  * `GELF_HOST value`: Set this to the IP address of the Graylog host that will receive IMRT's log messages
+    * Example:
+    
+    ```yaml
+    - name: GELF_HOST
+    - value: 127.0.0.1 # the external/accessible IP address for the Graylog instance
+    ```
+    
+* Example of a completed `fluentd-gelf-logging.yml` file:
+
+```yaml
+# Taken from https://github.com/xbernpa/fluentd-kubernetes-gelf/blob/master/kubernetes/fluentd-daemonset-gelf.yaml
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: imrt-example-gelf
+  namespace: kube-system
+  labels:
+    k8s-app: fluentd-gelf-logging
+    version: v1
+    kubernetes.io/cluster-service: "true"
+spec:
+  template:
+    metadata:
+      labels:
+        k8s-app: fluentd-gelf-logging
+        version: v1
+        kubernetes.io/cluster-service: "true"
+    spec:
+      nodeSelector:
+        kubernetes.io/role: node
+      containers:
+      - name: fluentd
+        image: xbernpa/fluentd-kubernetes-gelf
+        env:
+          - name: GELF_HOST
+            value: "123.456.789.012"  # external/accessiblg IP address for Graylog host
+          - name: GELF_PORT
+            value: "12201"
+          - name: GELF_PROTOCOL
+            value: "udp"
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+```
+
+* Once satisifed, save the changes
+* Deploy the k8s GELF logging daemonset with the following command:
+  * `kubectl apply -f fluentd-gelf-logging.yml`
+
 #### Configure Domains
 To provide external access to the IMRT applications with AWS Route53, follow these steps in the AWS console:
 

@@ -16,8 +16,9 @@ IMRT is a suite of applications. These documents provide additional information 
 6. [Release Notes](docs/release_notes.md)
 
 ### Common Tasks
-* [Delete an Item](docs/delete-item.md) 
+* [Delete an Item](docs/delete-item.md)
 * [Create BI logins to database](docs/create_bi_logins.md)
+* [Monitor Specific IMRT Environments in Graylog](docs/monitor-env-graylog.md)
 
 
 ## License
