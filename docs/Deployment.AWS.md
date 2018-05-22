@@ -38,7 +38,7 @@ If you are upgrading an existing system please first refer to the [Release Notes
     --dns-zone=[name of Route53 zone] \
     --ssh-public-key="[public key]" \
     --state=s3://[state store] \
-    --authorization=AlwaysAllow 
+    --authorization=AlwaysAllow
 ```
 
 * **Example:**
@@ -50,13 +50,13 @@ If you are upgrading an existing system please first refer to the [Release Notes
     --dns-zone=example.org \
     --ssh-public-key="~/.ssh/imrt-admin.pub" \
     --state=s3://kops-imrt-dev-state-store \
-    --authorization=AlwaysAllow 
-  
+    --authorization=AlwaysAllow
+
 ```
 
-* Edit the cluster configuration and change any desired settings, paying particular attention to the number of nodes, instance type and the size of the EC2 instances. For dev there are 2 "nodes" and one "master". You can find some documentation [here](https://github.com/kubernetes/kops/blob/master/docs/instance_groups.md).  
+* Edit the cluster configuration and change any desired settings, paying particular attention to the number of nodes, instance type and the size of the EC2 instances. For dev there are 2 "nodes" and one "master". You can find some documentation [here](https://github.com/kubernetes/kops/blob/master/docs/instance_groups.md).
 
->_**IMPORTANT:  When choosing a node size, avoid using `m3` AWS instance types.**  During deployments to AWS, using `m3.medium` AWS EC2 instances resulted in unpredictable behavior.  Additionally, the `m3.medium` instance type was not available for use in some AWS availability zones.  Consult AWS documentation for details on instance type availability._  
+>_**IMPORTANT:  When choosing a node size, avoid using `m3` AWS instance types.**  During deployments to AWS, using `m3.medium` AWS EC2 instances resulted in unpredictable behavior.  Additionally, the `m3.medium` instance type was not available for use in some AWS availability zones.  Consult AWS documentation for details on instance type availability._
 
 * Edit the cluster configuration and change any desired settings, paying particular attention to the number of nodes and the size of the EC2 instances. For dev there are 2 "nodes" and one "master". You can find some documentation [here](https://github.com/kubernetes/kops/blob/master/docs/instance_groups.md).  Some useful commands are:
    <pre>
@@ -68,7 +68,7 @@ If you are upgrading an existing system please first refer to the [Release Notes
    kops edit ig master-us-east-2b --name dev.imrt.org --state s3://kops-imrt-dev-state-store
    kops edit ig nodes --name dev.imrt.example.org --state s3://kops-imrt-dev-state-store
    </pre>
-   
+
 * Now you actually create the cluster in AWS.
    <pre>kops update cluster --name dev.imrt.org --state s3://kops-imrt-dev-state-store --yes</pre>
    This can take a really long time - 10 minutes up to an hour. Keep executing the validate command until you get a valid result
@@ -110,7 +110,7 @@ The database that supports IMRT will be an Amazon Aurora Cluster using the Postg
 * Choose a database port (default is 5432)
 * Choose a **DB Parameter Group** appropriate for the chosen database engine (e.g. `default.aurora-postgresql9.6`)
 * Choose a **DB Cluster Parameter Group** appropriate for the chosen database cluster (e.g. `default.aurora-postgresql9.6`)
-* Decide whether to enable encryption based on your institution's policies 
+* Decide whether to enable encryption based on your institution's policies
   * Managing database encryption is beyond the scope of this checklist
 * Failover:
   * choose priority (default is no preference)
@@ -206,8 +206,8 @@ Graylog will be installed in AWS following the directions [here](http://docs.gra
     * You will be prompted to supply an ssh key, you can select the same one used for creating the k8s cluster from the dropdown.
     * Click on the EC2 instance, and give it a name, for example `imrt-graylog-dev`
 * When the EC2 Instance comes up, ssh into it using the username `ubuntu` and the key you provided above.
-* Configure the server as described [here](http://docs.graylog.org/en/2.4/pages/installation/aws.html). 
-  * Stick to `http` for now, don't configure `https` 
+* Configure the server as described [here](http://docs.graylog.org/en/2.4/pages/installation/aws.html).
+  * Stick to `http` for now, don't configure `https`
   * Use the default ports
   * Make sure you change the password for the web interface
 * Configure the security group
@@ -242,7 +242,7 @@ To create an access token (used by IMRT to fetch data from GitLab via the GitLab
 * Make user an `auditor` member to provide read-only access to the content within the project group
 
 #### Grant Access to the Project Group in Itembank
-The IIS GitLab user account must have access to the GitLab project group that 
+The IIS GitLab user account must have access to the GitLab project group that
 
 * Navigate to **Groups**
 * Choose the right group (e.g. **iat-development**)
@@ -274,7 +274,7 @@ If the access token is properly configured, the curl request will return a paylo
    * Edit the `configuration-service.yml` file locally and set the `GIT_PASSWORD`, and `ENCRYPT_KEY` values. _**NOTE:**_ _Do not check in these credentials!_
    * Create the configuration service
    <pre>kubectl apply -f configuration-service.yml</pre>
-   * Edit the `rabbit-cluster.yml` file and set the following: 
+   * Edit the `rabbit-cluster.yml` file and set the following:
      * `RABBITMQ_ERLANG_COOKIE` (this can be any alpha-numeric text value, avoid special characters)
      * `RABBITMQ_DEFAULT_USER`
      * `RABBITMQ_DEFAULT_PASS`
@@ -284,7 +284,7 @@ If the access token is properly configured, the curl request will return a paylo
    kubectl apply -f rabbitmq_rbac.yml
    kubectl apply -f rabbit-cluster.yml
    </pre>
-   * Wait until the rabbit pods are up, you can monitor them using `kubectl get po`. 
+   * Wait until the rabbit pods are up, you can monitor them using `kubectl get po`.
    * You can monitor the rabbit management interface on the master node of your cluster, port 31672.
    * Edit the `iis.yml` and `iss.yml` files locally and set the `SPRING_CLOUD_CONFIG_LABEL` value.
      * This should match the branch in the config repo that you want to use for this deployment.
@@ -292,7 +292,7 @@ If the access token is properly configured, the curl request will return a paylo
    <pre>
    kubectl exec configuration-deployment-778dbb5675-pcwc7 -- curl http://localhost:8888/encrypt -d 'Test'
    </pre>
-   * The value for `spring.rabbitmq.password` in the `ap-imrt-iis.yml` file on the selected branch in the config repo must match the rabbit password you set above, and must be encrypted with the `ENCRYPT_KEY` set for the configuration service. You can encrpyt a value on the configuration service as described above.  
+   * The value for `spring.rabbitmq.password` in the `ap-imrt-iis.yml` file on the selected branch in the config repo must match the rabbit password you set above, and must be encrypted with the `ENCRYPT_KEY` set for the configuration service. You can encrpyt a value on the configuration service as described above.
    * Point the IIS and ISS applications at the new graylog server
      * Edit `iis.yml` and `iss.yml` and set the value for the `GRAYLOG_HOST` parameter to match the domain name you created above, for exampl `imrt-graylog-dev.sbtds.org`
 * Verify that you see logs from both applications in the graylog web interface
@@ -324,6 +324,20 @@ If the access token is properly configured, the curl request will return a paylo
    <pre>
    LoadBalancer Ingress:     af909e7b316b511e8b7d50a62d3a6aa8-729550325.us-east-2.elb.amazonaws.com
    </pre>
+
+#### Configure the GELF Logging Daemonset for Kubernetes
+* Open the `fluentd-gelf-logging.yml` in an editor and update the following lines:
+  * `name`:  Set this to a name that is meaningful and easy to identify when filtering in Graylog.  This value will appear as the "source" in Graylog messages.  Whatever you decide, be consistent between environments to simplify Graylog filtering.
+    * Examples:  `imrt-dev` for a development environment, `imrt-production` for a production environment
+  * `GELF_HOST value`: Set this to the IP address of the Graylog host that will receive IMRT's log messages
+    * Example:
+    ```yaml
+    - name: GELF_HOST
+    - value: 127.0.0.1 # the external/accessible IP address for the Graylog instance
+    ```
+* Once satisifed, save the changes
+* Deploy the k8s GELF logging daemonset with the following command:
+  * `kubectl apply -f fluentd-gelf-logging.yml`
 
 #### Configure Domains
 To provide external access to the IMRT applications with AWS Route53, follow these steps in the AWS console:
@@ -365,18 +379,18 @@ To ensure IMRT is up-to-date with the content stored in source control, the Item
             restartPolicy: Never
   ```
 * Update the `schedule` value to match a time consistent with your institution's policies
-  * The schedule is configured using [Cron format](https://en.wikipedia.org/wiki/Cron#Overview) 
+  * The schedule is configured using [Cron format](https://en.wikipedia.org/wiki/Cron#Overview)
   * Time is in UTC
   * To minimize potential performance impact, the recommendation is to schedule the cron to execute once daily after production hours
   * Additional details about cron jobs in Kubernetes environments can be found [here](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)
 * Update the `image` to match the Item Ingest Service (IIS) image that has been deployed
-  * To find the name of the IIS image: 
+  * To find the name of the IIS image:
 
     ```
     # identify the name of the pod hosting IIS
     $ kubectl get po | grep iis
     ap-imrt-iis-deployment-6f876df74-49rfv      1/1       Running     0          2d
-  
+
     # Describe the IIS pod name and get the image name
     $ kubectl describe po ap-imrt-iis-deployment-6f876df74-49rfv | grep -i image:
         Image:          fwsbac/ap-imrt-iis:0.1.26
@@ -418,7 +432,7 @@ Once IMRT has been fully deployed, the database should be synchronized with the 
 #### Updating YML file
    * When changes are made to a YML file, they can be applied to the cluster: <pre>kubectl apply -f xxx-service.yml</pre>
 
-#### Updating SNAPSHOT image (no docker tag change) 
+#### Updating SNAPSHOT image (no docker tag change)
 <pre>kubectl patch deployment ap-imrt-iis-deployment -p '{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"%s\"}}}}}'
 </pre>
 replacing %s with the current date in epoch format.
