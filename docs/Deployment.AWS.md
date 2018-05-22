@@ -331,10 +331,10 @@ If the access token is properly configured, the curl request will return a paylo
     * Examples:  `imrt-dev` for a development environment, `imrt-production` for a production environment
   * `GELF_HOST value`: Set this to the IP address of the Graylog host that will receive IMRT's log messages
     * Example:
-    ```yaml
-    - name: GELF_HOST
-    - value: 127.0.0.1 # the external/accessible IP address for the Graylog instance
-    ```
+      ```yaml
+      - name: GELF_HOST
+      - value: 127.0.0.1 # the external/accessible IP address for the Graylog instance
+      ```
 * Once satisifed, save the changes
 * Deploy the k8s GELF logging daemonset with the following command:
   * `kubectl apply -f fluentd-gelf-logging.yml`
