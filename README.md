@@ -20,6 +20,7 @@ IMRT is a suite of applications. These documents provide additional information 
 * [Create BI logins to database](docs/create_bi_logins.md)
 * [Monitor Specific IMRT Environments in Graylog](docs/monitor-env-graylog.md)
 * [Configure Bastion Server in Kubernetes Cluster](docs/configure-bastion.md)
+* [Decommission a Kubernetes Cluster](docs/decomission-cluster.md)
 
 
 ## License
