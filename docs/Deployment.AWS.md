@@ -31,28 +31,43 @@ If you are upgrading an existing system please first refer to the [Release Notes
     <pre>aws s3api put-bucket-versioning --bucket kops-imrt-dev-state-store --versioning-configuration Status=Enabled</pre>
 * Create cluster configuration.  Make sure you provide at least 2 availability zones in the `--zones` argument, this is required to be able to add the database to the VPC that is created by `kops`. This command creates and stores the configuration for the cluster, but nothing is actually created in AWS.
 
-```
- kops create cluster \
-    --zones=[comma-delimited list of availability zones] \
-    --name=[name of cluster] \
-    --dns-zone=[name of Route53 zone] \
-    --ssh-public-key="[public key]" \
-    --state=s3://[state store] \
-    --authorization=AlwaysAllow 
-```
+    ```bash
+    kops create cluster \
+      --cloud=aws \
+      --node-count=[number of agent nodes in the cluster] \
+      --zones=[comma-separated list of AWS availability zones] \
+      --master-zones=[comma-separated list of AWS availability zones] \
+      --dns-zone=[The DNS hosted zone (found in Route53)] \
+      --node-size=[The AWS instance type for the node(s).  AVOID m3 TYPES!] \
+      --master-size=[The AWS instance type for the master.  AVOID m3 TYPES!] \
+      --ssh-public-key="[the path to the ssh key for use with this cluster]" \
+      --topology private \
+      --networking weave \
+      --bastion \
+      --state=s3://[the name of the s3 bucket that will be used as this cluster's state store] \
+      --authorization=AlwaysAllow \
+      --name=[the name of the cluster]
+    ```
 
-* **Example:**
+* **Example:**  The example below shows what the `kops create cluster` command might look like after the values have been defined:
 
-```
- kops create cluster \
-    --zones=us-west-2a,us-west-2b \
-    --name=dev.imrt.example.org \
-    --dns-zone=example.org \
-    --ssh-public-key="~/.ssh/imrt-admin.pub" \
-    --state=s3://kops-imrt-dev-state-store \
-    --authorization=AlwaysAllow 
-  
-```
+    ```bash
+    kops create cluster \
+      --cloud=aws \
+      --node-count=2 \
+      --zones=us-east-2a,us-east-2b,us-east-2c \
+      --master-zones=us-east-2a,us-east-2b,us-east-2c \
+      --dns-zone=sbtds.org \
+      --node-size=t2.medium \
+      --master-size=t2.medium \
+      --ssh-public-key="/Users/jeffjohnson/.ssh/imrt/imrt-admin.pub" \
+      --topology private \
+      --networking weave \
+      --bastion \
+      --state=s3://kops-imrt-example-sbtds-org-state-store \
+      --authorization=AlwaysAllow \
+      --name=imrt.example.sbtds.org
+    ```
 
 * Edit the cluster configuration and change any desired settings, paying particular attention to the number of nodes, instance type and the size of the EC2 instances. For dev there are 2 "nodes" and one "master". You can find some documentation [here](https://github.com/kubernetes/kops/blob/master/docs/instance_groups.md).  
 
@@ -74,11 +89,83 @@ If you are upgrading an existing system please first refer to the [Release Notes
    This can take a really long time - 10 minutes up to an hour. Keep executing the validate command until you get a valid result
    <pre>kops validate cluster</pre>
    At this point you can go and look in AWS console and see the EC2 instances that have been created for your cluster. You can also try out some kubectl commands to check things out: https://kubernetes.io/docs/reference/kubectl/cheatsheet/
+* As part of the cluster creation process, `kops` will create a new VPC.  After the cluster has been created, note the VPC identifier (e.g. `vpc-1234abcd`)
 
 ### Create the Database
-The database that supports IMRT will be an Amazon Aurora Cluster using the PostgreSQL-compatible database engine.  Follow these steps to create the IMRT database server:
+>_**NOTE:** Database creation can occur while `kops` is creating the cluster (which can take several minutes to complete)._
 
-#### Select Engine
+The database that supports IMRT will be an Amazon Aurora Cluster using the PostgreSQL-compatible database engine.  The Amazon Aurora Cluster will be hosted in a separate VPC, distinct from the VPC that hosts the k8s cluster.  Follow these steps to create the IMRT database server in its own VPC:
+
+#### Create a New VPC for the Database Server
+Following the steps in [Creating a VPC with Public and Private Subnets for Your Clusters](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-public-private-vpc.html), create a new VPC:
+
+##### Allocate New Elastic IP
+* In the VPC Dashboard, click the **Elastic IPs** from the lefthand side
+* Click the **Allocate new address** button
+* On the next screen, click the **Allocate** button
+* Record the IP address and the **Allocation ID**; this will be used when creating the VPC
+
+##### Start VPC Creation Wizard
+* In the VPC Dashboard, click the **Start VPC Wizard** button
+* Select the **VPC with Public and Private Subnets** option (the second tab on the lefthand side of the wizard)
+* Choose CIDR blocks that are consistent with your network's policies/standards
+  * To prevent collisions, a CIDR calculator (e.g. [this one](https://www.ipaddressguide.com/cidr)) can help calculate the IP address range of a CIDR block
+* Provide a meaningful name for the VPC
+* For the **Elastic IP Allocation ID**, use the ID of the Elastic IP that was created
+
+After the VPC has been created:
+
+* Record the VPC identifier for future use
+* look up the subnets that have been created to determine which availibilty zone they are hosted in:
+  * In VPC dashboard, choose **Subnets** from the lefthand side
+  * Search for the VPC identifier to easily identify the subnets
+  * For each subnet, record the **Availability Zone**
+
+##### Create an Additional Private and Public Subnet
+To support an RDS database server, the VPC must support subnets in at least two availability zones.  
+
+To create the additional private subnet:
+
+* In VPC dashboard, choose **Subnets** from the lefthand side
+* Choose **Create Subnet**
+* Enter a meaningful name for your new _**Private**_ subnet
+* For the **VPC**, choose the VPC that was created previously
+* Choose an **Availability Zone** that is _different_ than the Availability Zone identified previously
+* Choose a **CIDR Block** that falls within the range of the CIDR Block of the VPC
+* Click **Yes, Create**
+
+To create the additional public subnet:
+
+* In VPC dashboard, choose **Subnets** from the lefthand side
+* Choose **Create Subnet**
+* Enter a meaningful name for your new _**Public**_ subnet
+* For the **VPC**, choose the VPC that was created previously
+* Choose an **Availability Zone** that is _different_ than the Availability Zone identified previously
+* Choose a **CIDR Block** that falls within the range of the CIDR Block of the VPC
+* Click **Yes, Create**
+* Select the _**Public**_ subnet that was just created and choose **Route Table, Edit**
+* Choose the Route Table that is routed to the Internet Gateway (**igw-1234abcd**) and click **Save**
+* Select the _**Public**_ subnet that was just created and choose **Subnet Actions**
+  * Choose **Modify auto-assign IP settings**
+  * Check the **Enable auto-assign public IPv4 address** checkbox and click **Save**
+
+--
+
+#### Create a Subnet Group
+To allow the k8s cluster VPC access to the database VPC that was created in the previous steps, a new **Subnet Group** must be created.  To create a new Subnet Group, take the following steps:
+
+* Navigate to the **RDS Dashboard**
+* Choose **Subnet Groups** on the lefthand side
+* In the **Name** field, provide a meaningful name
+* Provide a **Description** of what this Subnet Group represents
+* For **VPC**, choose the VPC identifier that was created in the **Start VPC Creation Wizard** section
+* In the **Add subnets** section, click the **Add all the subnets related to this VPC** button
+* Click the **Create** button
+
+--
+
+#### Select Database Engine
+* From the **RDS Dashboard**, click **Launch an Aurora DB instance**
 * From **Engine Options**, choose **Amazon Aurora**
 * Under **Edition** at the bottom of the **Engine Options**, choose **PostgreSQL-compatible**
 
@@ -95,9 +182,11 @@ The database that supports IMRT will be an Amazon Aurora Cluster using the Postg
   * Provide a **Master password**
     * Use a password that complies with your institution's password policy
 
+--
+
 #### Advanced Settings
-* Choose the same VPC as the k8s cluster currently being deployed (e.g. `dev.imrt.sbtds.org`)
-  * This should automatically choose the correct subnet group
+* Choose the VPC created specifically to host this RDS instance
+* Choose the Subnet Group that was created previously
 * Set the **Public Accessibility** to **Yes**
 * Choose an availability zone for the RDS instance to reside in
 * Choose an appropriate security group
@@ -125,6 +214,8 @@ The database that supports IMRT will be an Amazon Aurora Cluster using the Postg
   * Recommend **Enable auto minor version upgrade**, but choose an option that complies with your institution's standards.
   * If **Enable auto minor version upgrade** is enabled, select a maintenance window that complies with your institution's standards
 
+--
+
 #### Monitor Creation of Aurora Cluster
 After clicking the **Create DB Instance** button, two instances will appear in the RDS **Instances** dashboard.  These are members of the cluster that was created in the previous steps.  Below are some details about the cluster that was created:
 
@@ -137,6 +228,8 @@ After clicking the **Create DB Instance** button, two instances will appear in t
 To view the cluster details, select the RDS **Clusters** dashboard.  From here, the **reader** and **writer** instances can be identified.
 
 _**OPTIONAL:**_ Rename the reader instance to something meaningful.  For example, `imrt-db-dev-aurora-us-east-2b` can be renamed to `imrt-db-dev-aurora-search` to indicate it is a replica intended to support the IMRT search API.  When making this change, be sure to select the **Apply Immediately** option if in a position to do so: this operation may incur downtime/service interruption while AWS makes the change.
+
+--
 
 ### Create Business Intelligence Replica
 To add another read-only replica to the Aurora Postgres cluster for business intelligence/reporting, take the following steps:
@@ -171,13 +264,30 @@ To add another read-only replica to the Aurora Postgres cluster for business int
   * If **Enable auto minor version upgrade** is enabled, select a maintenance window that complies with your institution's standards
 
 #### Update Security Groups
+The RDS instance's security group will have to be updated to allow traffic from the k8s cluster.  Because the RDS instance is in a VPC with public subnets, allowing this traffic is a simple matter of updating the RDS Server's Security Group.
+
 * Once your instance is up, find the **Security groups** section and click on the security group.
   * Give the created group a name so it is easy to find in future, for example `imrt-dev-db`
   * Select the security group checkbox on the left, and you will see details at the bottom. Under **Inbound** there will be a rule already created for the IP of the computer used to create the database instance. If you want to connect from other IP addresses you will have to add rules for them here.
+
+A new Inbound Rule should be created for each **NAT Gateway** in the k8s VPC.  To identify the k8s cluster's NAT Gateways:
+
+* Navigate to the **VPC Dashboard**
+* Click on the **NAT Gateways** on the lefthand side
+* Filter the list of NAT Gateways using the VPC identifier of the k8s cluster
+* For each NAT Gateway, record the **Elastic IP Address**
+* Navigate to the **RDS Dashboard**
+* Click on **Instances** on the lefthand side
+* Select the RDS instance to modify
+* In the **Security Group** section, click on the link that represents the Security Group
+* After the Security Group scren is displayed, click on the **Inbound** tab
+
+For each Nat Gateway's Elastic IP address:
+
 * Create a new **Inbound Rule**, giving the k8s nodes access to port 5432 (or whatever port was chosen when the DB instance was created). Select **Edit** -> **Add Rule**. Rule settings will be:
   * Type = **Custom TCP**
   * Port = **5432** (or whatever port was chosen when the DB instance was created)
-  * Source = **Custom**:  Start typing "nodes" in the address box. The security group for the nodes should come up as a suggestion that can be selected
+  * Source = **Custom**:  The Elastic IP address of the NAT Gateway
   * Description = This field is optional, but recommended.  Provide a brief description of the inbound rule, e.g. "Kubernetes cluster group"
 
 #### Create the `imrt` Schema on the Cluster
@@ -301,13 +411,6 @@ If the access token is properly configured, the curl request will return a paylo
      kubectl apply -f iis.yml
      kubectl apply -f iss.yml
    </pre>
-* Configure external ports
-   * By default, `kops` opens the SSH port on all the EC2 instances in your cluster.  [This might be one method](https://kubernetes.io/docs/concepts/services-networking/network-policies) to avoid making the SSH port publicly available on the nodes created by `kops`.
-   * If you want to shut down the ssh ports manually, take the following steps in the AWS console:
-     * Go to **Services** -> **EC2**
-     * Find all the instances belonging to your cluster
-     * For each instance, scroll all the way over to the right and click on their security group link
-     * From here you can remove the rule for SSH access
 * Create nginx ingress and load balancer
    <pre>
    kubectl apply -f imrt-ingress.yml
