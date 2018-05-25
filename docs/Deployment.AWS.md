@@ -111,20 +111,6 @@ Some notes about creating the VPC:
 * Choose CIDR blocks that are consistent with your network's policies/standards
   * To prevent collisions, a CIDR calculator (e.g. [this one](https://www.ipaddressguide.com/cidr)) can help calculate the IP address range of a CIDR block
 
-##### Allocate New Elastic IP
-* In the VPC Dashboard, click the **Elastic IPs** from the lefthand side
-* Click the **Allocate new address** button
-* On the next screen, click the **Allocate** button
-* Record the IP address and the **Allocation ID**; this will be used when creating the `db vpc`
-
-##### Start VPC Creation Wizard
-* In the VPC Dashboard, click the **Start VPC Wizard** button
-* Select the **VPC with Public and Private Subnets** option (the second tab on the lefthand side of the wizard)
-* Choose CIDR blocks that are consistent with your network's policies/standards
-  * To prevent collisions, a CIDR calculator (e.g. [this one](https://www.ipaddressguide.com/cidr)) can help calculate the IP address range of a CIDR block
-* Provide a meaningful name for the `db vpc`
-* For the **Elastic IP Allocation ID**, use the ID of the Elastic IP that was created
-
 #### Create a Subnet Group
 To allow the `k8s vpc` access to the `db vpc`, a new **Subnet Group** must be created.  To create a new Subnet Group, take the following steps:
 
