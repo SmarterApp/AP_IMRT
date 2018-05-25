@@ -185,7 +185,6 @@ To allow the `k8s vpc` access to the `db vpc`, a new **Subnet Group** must be cr
   * Provide a **Master password**
     * Use a password that complies with your institution's password policy
 
-
 #### Advanced Settings
 * Choose the `db vpc`
 * Choose the Subnet Group that was created previously
@@ -216,7 +215,6 @@ To allow the `k8s vpc` access to the `db vpc`, a new **Subnet Group** must be cr
   * Recommend **Enable auto minor version upgrade**, but choose an option that complies with your institution's standards.
   * If **Enable auto minor version upgrade** is enabled, select a maintenance window that complies with your institution's standards
 
-
 #### Monitor Creation of Aurora Cluster
 After clicking the **Create DB Instance** button, two instances will appear in the RDS **Instances** dashboard.  These are members of the cluster that was created in the previous steps.  Below are some details about the cluster that was created:
 
@@ -229,7 +227,6 @@ After clicking the **Create DB Instance** button, two instances will appear in t
 To view the cluster details, select the RDS **Clusters** dashboard.  From here, the **reader** and **writer** instances can be identified.
 
 _**OPTIONAL:**_ Rename the reader instance to something meaningful.  For example, `imrt-db-dev-aurora-us-east-2b` can be renamed to `imrt-db-dev-aurora-search` to indicate it is a replica intended to support the IMRT search API.  When making this change, be sure to select the **Apply Immediately** option if in a position to do so: this operation may incur downtime/service interruption while AWS makes the change.
-
 
 ### Create Business Intelligence Replica
 To add another read-only replica to the Aurora Postgres cluster for business intelligence/reporting, take the following steps:
