@@ -7,6 +7,8 @@ When an environment is no longer actively in use, it should be decommissioned.  
 ## Delete the Database Server
 Prior to deleting the Kubernetes (k8s) cluster, delete the RDS instance(s) that it interacts with.  To delete the RDS instance(s), take the following steps:
 
+>_**IMPORTANT:** While the delete process will prompt for a final snapshot before deleting the RDS instance, a snapshot can also be taken prior to executing the delete operation.  Details for taking a snapshot of an RDS instance can be found [here on AWS's site](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateSnapshot.html).  Even though the environment is being decommissioned, it may be valuable to have snapshots of the database to restore at a later date (e.g. for analysis, troubleshooting, etc.)._
+
 ### If the k8s Cluster Uses an Aurora Cluster
 * Navigate to the **RDS Dashboard**
 * Click on **Clusters** on the lefthand side
@@ -15,7 +17,8 @@ Prior to deleting the Kubernetes (k8s) cluster, delete the RDS instance(s) that 
   * Click on the link for the cluster member
   * Under **Instance Actions**, choose **Delete**
   * Follow the prompts
-  * _**OPTIONAL (but recommended):**_ Take a final snapshot of the RDS instance prior to deletion
+  * _**OPTIONAL (but recommended):**_ When prompted, choose **Yes** to take a final snapshot of the RDS instance prior to deletion
+    * AWS will take the final snapshot automatically as part of the delete process
 
 When all the members of the Aurora Cluster have been deleted, the cluster itself will report as **deleting**.  The delete operation can take several minutes to complete.
 
@@ -25,9 +28,13 @@ When all the members of the Aurora Cluster have been deleted, the cluster itself
 * Select the RDS instance to delete
 * Under **Instance Actions**, choose **Delete**
 * Follow the prompts
-* _**OPTIONAL (but recommended):**_ Take a final snapshot of the RDS instance prior to deletion
+* _**OPTIONAL (but recommended):**_ When prompted, choose **Yes** to take a final snapshot of the RDS instance prior to deletion
+    * AWS will take the final snapshot automatically as part of the delete process
 
 ### Delete the Database VPC
+
+>_**NOTE:** This may not be necessary if the earlier deployment did not create a separate DB VPC_
+
 After all RDS instances have been deleted, the database VPC can be removed.  To delete the database VPC, take the following steps:
 
 * Navigate to the **VPC Dashboard**
@@ -118,16 +125,5 @@ With the k8s cluster deleted, the system hook for the decomissioned environment 
 * Click on the **System Hooks** menu item
 * Identify the system hook for the decommissioned environment in the list and click **Remove**
 
-### Delete Deployment Files From Source Control
-If the environment being decommissioned will never be used again, the deployment files for this environment can be deleted from source control.  Deletion of these files will depend on how they are managed in source control; some possibilities are:
-
-* Delete the repository containing the deployment files for the specified environment
-* Delete the directory in the general "Deployment Files" repository for the specified environment
-* Delete the branch in the general "Deployment Files" repository for the specified environment
-
-### Remove Enivronment Configuration Files From Source Control
-If the environment being decommissioned will never be used again, the configuration files for this environment can be deleted from source control.  Deletion of these files will depend on how they are managed in source control; some possibilities are:
-
-* Delete the repository containing the configuration files for the specified environment
-* Delete the directory in the general "Configuration Files" repository for the specified environment
-* Delete the branch in the general "Configuration Files" repository for the specified environment
+### Delete Deployment and Configuration Files From Source Control
+Fairway recommends deleting any unused Configuration or Deployment `yml` files for the environment that has been decommissioned. These files may be in Gitlab, Github or stored locally on a machine.

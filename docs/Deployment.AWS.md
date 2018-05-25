@@ -31,6 +31,8 @@ If you are upgrading an existing system please first refer to the [Release Notes
     <pre>aws s3api put-bucket-versioning --bucket kops-imrt-dev-state-store --versioning-configuration Status=Enabled</pre>
 * Create cluster configuration.  Make sure you provide at least 2 availability zones in the `--zones` argument, this is required to be able to add the database to the VPC that is created by `kops`. This command creates and stores the configuration for the cluster, but nothing is actually created in AWS.
 
+>_**IMPORTANT:  When choosing a node size for your cluster's instances, avoid using `m3` AWS instance types.**  During deployments to AWS, using `m3.medium` AWS EC2 instances resulted in unpredictable behavior.  Additionally, the `m3.medium` instance type was not available for use in some AWS availability zones.  Consult AWS documentation for details on instance type availability._  
+
     ```
     kops create cluster \
       --cloud=aws \
@@ -58,9 +60,9 @@ If you are upgrading an existing system please first refer to the [Release Notes
       --zones=us-east-2a,us-east-2b,us-east-2c \
       --master-zones=us-east-2a,us-east-2b,us-east-2c \
       --dns-zone=sbtds.org \
-      --node-size=t2.medium \
-      --master-size=t2.medium \
-      --ssh-public-key="/Users/jeffjohnson/.ssh/imrt/imrt-admin.pub" \
+      --node-size=m4.large \
+      --master-size=m4.large \
+      --ssh-public-key="/path/to/ssh/public/key/imrt-example.pub" \
       --topology private \
       --networking weave \
       --bastion \
@@ -70,8 +72,6 @@ If you are upgrading an existing system please first refer to the [Release Notes
     ```
 
 * Edit the cluster configuration and change any desired settings, paying particular attention to the number of nodes, instance type and the size of the EC2 instances. For dev there are 2 "nodes" and one "master". You can find some documentation [here](https://github.com/kubernetes/kops/blob/master/docs/instance_groups.md).  
-
->_**IMPORTANT:  When choosing a node size, avoid using `m3` AWS instance types.**  During deployments to AWS, using `m3.medium` AWS EC2 instances resulted in unpredictable behavior.  Additionally, the `m3.medium` instance type was not available for use in some AWS availability zones.  Consult AWS documentation for details on instance type availability._  
 
 * Edit the cluster configuration and change any desired settings, paying particular attention to the number of nodes and the size of the EC2 instances. For dev there are 2 "nodes" and one "master". You can find some documentation [here](https://github.com/kubernetes/kops/blob/master/docs/instance_groups.md).  Some useful commands are:
    <pre>
@@ -102,7 +102,14 @@ The database that supports IMRT will be an Amazon Aurora Cluster using the Postg
 Follow these steps to create the IMRT database server in its own VPC:
 
 #### Create a New VPC for the Database Server
-Following the steps in [Creating a VPC with Public and Private Subnets for Your Clusters](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-public-private-vpc.html), create a new VPC:
+To create a new VPC to host the RDS Instance(s) follow the steps in [Creating a VPC with Public and Private Subnets for Your Clusters](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-public-private-vpc.html).
+
+Some notes about creating the VPC:
+
+* There must be at least two private subnets in different availability zones (e.g. one in `us-east-2a`, another in `us-east-2b`)
+* There must be at least two public subnets in different availability zones (e.g. one in `us-east-2a`, another in `us-east-2b`)
+* Choose CIDR blocks that are consistent with your network's policies/standards
+  * To prevent collisions, a CIDR calculator (e.g. [this one](https://www.ipaddressguide.com/cidr)) can help calculate the IP address range of a CIDR block
 
 ##### Allocate New Elastic IP
 * In the VPC Dashboard, click the **Elastic IPs** from the lefthand side
@@ -117,43 +124,6 @@ Following the steps in [Creating a VPC with Public and Private Subnets for Your 
   * To prevent collisions, a CIDR calculator (e.g. [this one](https://www.ipaddressguide.com/cidr)) can help calculate the IP address range of a CIDR block
 * Provide a meaningful name for the `db vpc`
 * For the **Elastic IP Allocation ID**, use the ID of the Elastic IP that was created
-
-After the `db vpc` has been created:
-
-* Record the `db vpc` identifier for future use
-* look up the subnets that have been created to determine which availibilty zone they are hosted in:
-  * In VPC dashboard, choose **Subnets** from the lefthand side
-  * Filter by the `db vpc` identifier to easily identify the subnets
-  * For each subnet, record the **Availability Zone**
-
-##### Create an Additional Private and Public Subnet
-To support an RDS database server, the `db vpc` must support subnets in at least two availability zones.  
-
-To create the additional private subnet:
-
-* In VPC dashboard, choose **Subnets** from the lefthand side
-* Choose **Create Subnet**
-* Enter a meaningful name for your new _**Private**_ subnet
-* For the **VPC**, choose the `db vpc`
-* Choose an **Availability Zone** that is _different_ than the Availability Zone identified previously
-* Choose a **CIDR Block** that falls within the range of the CIDR Block of the `db vpc`
-* Click **Yes, Create**
-
-To create the additional public subnet:
-
-* In VPC dashboard, choose **Subnets** from the lefthand side
-* Choose **Create Subnet**
-* Enter a meaningful name for your new _**Public**_ subnet
-* For the **VPC**, choose the `db vpc`
-* Choose an **Availability Zone** that is _different_ than the Availability Zone identified previously
-* Choose a **CIDR Block** that falls within the range of the CIDR Block of the `db vpc`
-* Click **Yes, Create**
-* Select the _**Public**_ subnet that was just created and choose **Route Table, Edit**
-* Choose the Route Table that is routed to the Internet Gateway (**igw-1234abcd**) and click **Save**
-* Select the _**Public**_ subnet that was just created and choose **Subnet Actions**
-  * Choose **Modify auto-assign IP settings**
-  * Check the **Enable auto-assign public IPv4 address** checkbox and click **Save**
-
 
 #### Create a Subnet Group
 To allow the `k8s vpc` access to the `db vpc`, a new **Subnet Group** must be created.  To create a new Subnet Group, take the following steps:
@@ -290,7 +260,7 @@ For each Nat Gateway's Elastic IP address:
   * Source = **Custom**:  The Elastic IP address of the NAT Gateway
   * Description = This field is optional, but recommended.  Provide a brief description of the inbound rule, e.g. "Kubernetes cluster group"
 
-* **OPTIONAL (but recommended):**  Add the IP address of whatever user/computer is conducting the deployment.  This will allow executing the `AP_IMRT_Schema.jar` against the RDS instance from a remote computer (as opposed to running it from the bastion server).
+* **OPTIONAL:**  Add the IP address of whatever user/computer is conducting the deployment.  This will allow executing the `AP_IMRT_Schema.jar` against the RDS instance from a remote computer (as opposed to running it from the bastion server).
   * If this is not a viable option, see [this page](./configure-bastion.md) for configuring the bastion server in the `k8s vpc`.
 
 #### Create the `imrt` Schema on the Cluster
@@ -299,12 +269,6 @@ Now that the Aurora Postgres cluster has been created, the `imrt` database schem
 For creating the `imrt` schema, the relased version of the `AP_IMRT_Schema.jar` can be downloaded.  To get the latest release of the `AP_IMRT_Schema.jar`, take the following steps:
 
 * Refer to the [Release Notes](./release_notes.md) page to identify the correct version of the `AP_IMRT_Schema.jar`
-* Make directory to host `AP_IMRT_Schema.jar`, for example:
-  * `mkdir -p imrt/deploy/0.1.1/db && cd imrt/deploy/0.1.1/db`
-* Get the latest release of the `AP_IMRT_Schema.jar`:
-  * `wget -O AP_IMRT_Schema.jar https://github.com/SmarterApp/AP_IMRT_Schema/releases/download/[version of AP_IMRT_Schema.jar to downloade]/AP_IMRT_Schema.jar`
-* Example showing how to download the **0.1.2** release:
-  * `wget -O AP_IMRT_Schema.jar https://github.com/SmarterApp/AP_IMRT_Schema/releases/download/0.1.2/AP_IMRT_Schema.jar`
 
 #### Running Flyway Against the Aurora Postgres Cluster
 * Set the `url` to the **Cluster endpoint** value defined in the RDS dashboard

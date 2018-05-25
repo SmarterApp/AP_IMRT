@@ -20,7 +20,7 @@ When created, the bastion server is a small machine with little more than an OS 
   sudo apt-get install oracle-java8-installer
   ```
   
-  * Verify Java version:
+  * Verify Java version is at `1.8.0` or higher:
  
       ```
       $ java -version
