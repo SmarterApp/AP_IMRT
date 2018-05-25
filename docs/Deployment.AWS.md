@@ -77,8 +77,8 @@ If you are upgrading an existing system please first refer to the [Release Notes
    <pre>
    kops get instancegroups --name dev.imrt.example.org --state s3://kops-imrt-dev-state-store
    NAME			ROLE	MACHINETYPE	MIN	MAX	ZONES
-   master-us-east-2c	Master	t2.medium	1	1	us-east-2b
-   nodes			Node	t2.medium	2	2	us-east-2b,us-east-2c
+   master-us-east-2c	Master	m4.large	1	1	us-east-2b
+   nodes			Node	m4.large	2	2	us-east-2b,us-east-2c
 
    kops edit ig master-us-east-2b --name dev.imrt.org --state s3://kops-imrt-dev-state-store
    kops edit ig nodes --name dev.imrt.example.org --state s3://kops-imrt-dev-state-store
