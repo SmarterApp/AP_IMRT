@@ -1,11 +1,13 @@
-# Decommission an IMRT Environment
+# Decommissioning an IMRT Environment
 
 [Go Back](../README.md)
+
+When an environment is no longer actively in use, it should be decommissioned.  There are several steps to decommissioning an IMRT environment, all of which are outlined below.
 
 ## Delete the Database Server
 Prior to deleting the Kubernetes (k8s) cluster, delete the RDS instance(s) that it interacts with.  To delete the RDS instance(s), take the following steps:
 
-### Deleting an Aurora Cluster
+### If the k8s Cluster Uses an Aurora Cluster
 * Navigate to the **RDS Dashboard**
 * Click on **Clusters** on the lefthand side
 * Click on the desired cluster; the **Cluster Members** section of this screen will identify all RDS instances that participate in the cluster
@@ -17,7 +19,7 @@ Prior to deleting the Kubernetes (k8s) cluster, delete the RDS instance(s) that 
 
 When all the members of the Aurora Cluster have been deleted, the cluster itself will report as **deleting**.  The delete operation can take several minutes to complete.
 
-### Delete an RDS Instance
+### If the k8s Cluster Uses an RDS Instance
 * Navigate to the **RDS Dashboard**
 * Click on **Instances** on the lefthand side
 * Select the RDS instance to delete
@@ -53,16 +55,57 @@ Carefully review the output of the `kops delete cluster` command to become famil
 
 `kops delete cluster --name=imrt.example.sbtds.org --state=s3://imrt-example-sbtds-org-state-store --yes`
 
-The `kops delete cluster` command will take several minutes to execute, and may report some errors/issues.  Let the command continue to run - the delete operation may be attempting to delete resources that depend on other resources that have not been deleted yet.
+The `kops delete cluster` command will take several minutes to execute, and may report some resources that could not be deleted.  Let the command continue to run - as the `kops delete cluster` command continues to run, the list of resources should gradually decrease.
+
+When the delete command completes, it will report the following in the terminal:
+
+```
+Deleted kubectl config for imrt.example.sbtds.org
+
+Deleted cluster: "imrt.example.sbtds.org"
+```
+
+#### When `kops` Cannot Delete Some Resources
+In some cases, `kops` will not be able to remove some resources.  After several minutes, the `kops delete cluster` will quit and report the resources it could not delete.  An example is shown below:
+
+```
+Not all resources deleted; waiting before reattempting deletion
+	dhcp-options:dopt-8eeb7ee6
+	vpc:vpc-df8138b7
+	security-group:sg-82941fe9
+
+not making progress deleting resources; giving up
+```
+
+When this happens, the resources must be deleted manually.  Log into AWS and delete the resources from the appropriate location.  In the example above, all the resources can be found in the **VPC Dashboard**.  Use the filter to identify the item and attempt to delete it.
+
+After all resources have been removed, run the delete command again.  The output should appear similar to what is shown below:
+
+```
+No cloud resources to delete
+Deleted kubectl config for imrt.example.sbtds.org
+
+Deleted cluster: "imrt.example.sbtds.org"
+```
+
+At this point, the k8s cluster has been deleted and all its AWS resources have been removed.
 
 ### Delete the k8s State Store in S3
 If the S3 bucket used as this cluster's state store does not store state for any other `kops` clusters, the S3 bucket can be safely removed.
 
->_**IMPORTANT:** be sure the state store S3 bucket does not support any other k8s clusters!_
+>_**IMPORTANT:** Be sure the state store S3 bucket does not support any other k8s clusters!_
 
 To delete the state store bucket from S3, take the following steps:
 * Navigate to the **S3 Dashboard**
 * Identify and click on row representing the S3 state store bucket
+* Click on the bucket's link to verify it is empty
+
+If the S3 state store bucket is not empty, take steps to clear out the state store bucket (e.g. run the `kops delete cluster` command again, move content to another S3 bucket, back up the data etc.)
+
+>_**IMPORTANT:** If the S3 bucket contains state for other k8s clusters, do not continue!_ 
+
+* Navigate back to the S3 dashboard
+* Click on the row of the state store bucket
 * Click the **Delete Bucket** button
 * When prompted, type in the name of the S3 bucket being deleted
   * This is different than deleting some other AWS resources (e.g. an RDS instance), which prompts the user to type "delete me"
@@ -75,4 +118,16 @@ With the k8s cluster deleted, the system hook for the decomissioned environment 
 * Click on the **System Hooks** menu item
 * Identify the system hook for the decommissioned environment in the list and click **Remove**
 
+### Delete Deployment Files From Source Control
+If the environment being decommissioned will never be used again, the deployment files for this environment can be deleted from source control.  Deletion of these files will depend on how they are managed in source control; some possibilities are:
 
+* Delete the repository containing the deployment files for the specified environment
+* Delete the directory in the general "Deployment Files" repository for the specified environment
+* Delete the branch in the general "Deployment Files" repository for the specified environment
+
+### Remove Enivronment Configuration Files From Source Control
+If the environment being decommissioned will never be used again, the configuration files for this environment can be deleted from source control.  Deletion of these files will depend on how they are managed in source control; some possibilities are:
+
+* Delete the repository containing the configuration files for the specified environment
+* Delete the directory in the general "Configuration Files" repository for the specified environment
+* Delete the branch in the general "Configuration Files" repository for the specified environment
