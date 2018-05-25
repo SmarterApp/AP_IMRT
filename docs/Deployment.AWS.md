@@ -294,14 +294,14 @@ For each Nat Gateway's Elastic IP address:
   * Description = This field is optional, but recommended.  Provide a brief description of the inbound rule, e.g. "Kubernetes cluster group"
 
 * **OPTIONAL (but recommended):**  Add the IP address of whatever user/computer is conducting the deployment.  This will allow executing the `AP_IMRT_Schema.jar` against the RDS instance from a remote computer (as opposed to running it from the bastion server).
-  * If this is not a viable option, see [this page]() for configuring the bastion server in the `k8s vpc`.
+  * If this is not a viable option, see [this page](./configure-bastion.md) for configuring the bastion server in the `k8s vpc`.
 
 #### Create the `imrt` Schema on the Cluster
 Now that the Aurora Postgres cluster has been created, the `imrt` database schema must be created.  Follow the steps outlined in the [AP\_IRMT\_Schema](https://github.com/SmarterApp/AP_IMRT_Schema) repository for SQL to create the required database objects (users, privileges, etc).
 
 For creating the `imrt` schema, the relased version of the `AP_IMRT_Schema.jar` can be downloaded.  To get the latest release of the `AP_IMRT_Schema.jar`, take the following steps:
 
-* Refer to the [Release Notes](./release-notes.md) page to identify the correct version of the `AP_IMRT_Schema.jar`
+* Refer to the [Release Notes](./release_notes.md) page to identify the correct version of the `AP_IMRT_Schema.jar`
 * Make directory to host `AP_IMRT_Schema.jar`, for example:
   * `mkdir -p imrt/deploy/0.1.1/db && cd imrt/deploy/0.1.1/db`
 * Get the latest release of the `AP_IMRT_Schema.jar`:
