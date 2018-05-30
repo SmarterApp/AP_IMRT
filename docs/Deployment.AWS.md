@@ -118,7 +118,7 @@ To allow the `k8s vpc` access to the `db vpc`, a new **Subnet Group** must be cr
 * Choose **Subnet Groups** on the lefthand side
 * In the **Name** field, provide a meaningful name
 * Provide a **Description** of what this Subnet Group represents
-* For **VPC**, choose the `db vpc` identifier
+* For **VPC**, choose the `k8s vpc` identifier
 * In the **Add subnets** section, click the **Add all the subnets related to this VPC** button
 * Click the **Create** button
 
@@ -539,7 +539,7 @@ In order to receive notifications that projects have been added to the Item Bank
 Once IMRT has been fully deployed, the database should be synchronized with the ItemBank. This can be done by performing a manual run of the item sync job.
 
 * Run `kubectl get po` to find the name of a pod that is running `ap-imrt-iis-deployment`
-* Manually execute the item sync job on that pod.<pre>kubectl exec ap-imrt-iis-deployment-xxx -- curl "http://localhost/sync"</pre>
+* Manually execute the item sync job on that pod.<pre>kubectl exec ap-imrt-iis-deployment-xxx -- curl -X POST -i "http://localhost:8080/sync"</pre>
 * Monitor the job using <pre>kubectl logs -f ap-imrt-iis-deployment-xxx</pre> and wait for it to complete.
 * Once the initial sync has completed, deploy the cron job to run it on a periodic basis. The yml file can be edited to modify the schedule as required.<pre>kubectl apply -f sync-cron.yml</pre>
 
