@@ -328,13 +328,7 @@ To verify the GitLab user is properly configured, the following command can be u
 curl -i --header "PRIVATE-TOKEN: [the access token of the IIS GitLab user]" https://[the GitLab domain]/api/v4/namespaces
 ```
 
-If the access token is properly configured, the curl request will return a payload containing the list of namespaces available to the user.
-
-* **Example (from [GitLab API Documentation](https://docs.gitlab.com/ee/api/namespaces.html)):**
-
-  ```
-  curl -i --header "PRIVATE-TOKEN: 9koXpg98eAheJpvBs5tK" https://gitlab.example.com/api/v4/namespaces
-  ```
+If the access token is properly configured, the curl request will return a payload containing the list of namespaces available to the user.  Examples of `curl` calls that exercise the GitLab API can be found in the [GitLab API Documentation](https://docs.gitlab.com/ee/api/namespaces.html).
 
 ### Deploy And Configure Services
 * Install and configure services
