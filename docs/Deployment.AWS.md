@@ -73,6 +73,48 @@ If you are upgrading an existing system please first refer to the [Release Notes
 
 * Edit the cluster configuration and change any desired settings, paying particular attention to the number of nodes, instance type and the size of the EC2 instances. For dev there are 2 "nodes" and one "master". You can find some documentation [here](https://github.com/kubernetes/kops/blob/master/docs/instance_groups.md).  
 
+>_**IMPORTANT:** The `ReadOnlyAPIDataVolumes` feature gate must be turned off/disabled to support the RabbitMQ cluster!  If this configuration change is not made, the cluster will not function._
+
+* To turn off/disable the `ReadOnlyAPIDataVolumes` feature gate, take the following steps:
+* Edit the cluster's configuration with the following command:  `kops edit ig nodes --name=[name of the cluster being created]`
+
+  * **Example:** `kops edit ig nodes --name=imrt.example.sbtds.org`
+
+* Add the following stanza to the YAML configuration of the nodes, underneath the `spec` section of the YAML document:
+
+```yaml
+kubelet:
+  featureGates:
+    ReadOnlyAPIDataVolumes: "false"
+```
+
+* Shown below is an example of a cluster's node configuration with the `kubelet` feature gate stanza is shown below.  Observe the `kubelet` stanza has been added beneath the `image`:
+
+```yaml
+apiVersion: kops/v1alpha2
+kind: InstanceGroup
+metadata:
+  creationTimestamp: 2018-05-01T21:10:03Z
+  labels:
+    kops.k8s.io/cluster: imrt.example.sbtds.org
+  name: nodes
+spec:
+  image: kope.io/k8s-1.8-debian-jessie-amd64-hvm-ebs-2018-02-08
+  kubelet:
+    featureGates:
+      ReadOnlyAPIDataVolumes: "false"
+  machineType: t2.medium
+  maxSize: 5
+  minSize: 2
+  nodeLabels:
+    kops.k8s.io/instancegroup: nodes
+  role: Node
+  subnets:
+  - us-east-2a
+  - us-east-2b
+  - us-east-2c
+```
+
 * Edit the cluster configuration and change any desired settings, paying particular attention to the number of nodes and the size of the EC2 instances. For dev there are 2 "nodes" and one "master". You can find some documentation [here](https://github.com/kubernetes/kops/blob/master/docs/instance_groups.md).  Some useful commands are:
    <pre>
    kops get instancegroups --name dev.imrt.example.org --state s3://kops-imrt-dev-state-store
