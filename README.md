@@ -21,6 +21,7 @@ IMRT is a suite of applications. These documents provide additional information 
 * [Monitor Specific IMRT Environments in Graylog](docs/monitor-env-graylog.md)
 * [Configure Bastion Server in Kubernetes Cluster](docs/configure-bastion.md)
 * [Decommission a Kubernetes Cluster](docs/decomission-cluster.md)
+* [Using the Kubernetes Bastion](docs/k8s-bastion-usage.md)
 
 
 ## License
