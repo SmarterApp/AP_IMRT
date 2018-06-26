@@ -32,6 +32,7 @@ Once the messages have been put on the RabbitMQ queue, the Item Synchronization 
 
 * **Monitor Item:** This message will use the GitLab API library (implemented in the [AP\_IMRT\_ItemIngestService](https://github.com/SmarterApp/AP_IMRT_ItemIngestService/blob/develop/src/main/java/org/opentestsystem/ap/imrt/iis/client/GitlabClientImpl.java)) to create a new project webhook for the item.
 * **Update Item:** This message will verify the item records in the `imrt` database are up-to-date with the most recent revision for the item.  If the item does not exist in the database, new records will be created.
+* **Delete Item:** This message will delete an item from the `imrt` database.
 
 Shown below is a sequence diagram of the steps described above:
 
