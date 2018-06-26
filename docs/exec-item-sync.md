@@ -137,44 +137,46 @@ The Item Synchronization Process job may occasionally fail before completing.  F
 -- status and exit_code == COMPLETED
 -- ----------------------------------------------------------------------
 SELECT
-	step_execution_id,
-	job_execution_id,
-	status,
-	exit_code,
-	start_time,
-	end_time,
-	last_updated
+    step_execution_id,
+    job_execution_id,
+    status,
+    exit_code,
+    start_time,
+    end_time,
+    last_updated
 FROM
-	batch_step_execution
+    batch_step_execution
 WHERE
-	status <> 'COMPLETED'
-	OR exit_code <> 'COMPLETED';
+    status <> 'COMPLETED'
+    OR exit_code <> 'COMPLETED';
 
 -- ----------------------------------------------------------------------
 -- Update the batch_step_execution table, indicating the job has finished
 -- executing.
 -- ----------------------------------------------------------------------
 UPDATE
-	batch_step_execution
+    batch_step_execution
 SET
-	status = 'COMPLETED',
-	exit_code = 'COMPLETED'
+    status = 'COMPLETED',
+    exit_code = 'COMPLETED',
+    end_time = CURRENT_TIMESTAMP
 WHERE
-	step_execution_id = -- [the step_execution_id of the record that is incomplete]
+    step_execution_id = -- [the step_execution_id of the record that is incomplete]
 
 -- ----------------------------------------------------------------------
 -- Update the batch_job_execution table, indicating the job has finished
 -- executing.
 -- ----------------------------------------------------------------------
 UPDATE
-	batch_job_execution
+    batch_job_execution
 SET
-	status = 'COMPLETED',
-	exit_code = 'COMPLETED'
+    status = 'COMPLETED',
+    exit_code = 'COMPLETED',
+    end_time = CURRENT_TIMESTAMP,
+    exit_message = 'Marked complete by SQL'
 WHERE
-	job_execution_id = -- [the job_execution_id of the record that is incomplete]
+    job_execution_id = -- [the job_execution_id of the record that is incomplete]
 ```
-
 If the SQL cited above does not resolve this issue, delete records from the Spring Batch metadata tables:
 
 ```sql
