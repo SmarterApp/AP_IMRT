@@ -211,7 +211,8 @@ UPDATE
 	batch_step_execution
 SET
 	status = 'COMPLETED',
-	exit_code = 'COMPLETED'
+	exit_code = 'COMPLETED',
+	end_time = CURRENT_TIMESTAMP
 WHERE
 	step_execution_id = -- [the step_execution_id of the record that is incomplete]
 
@@ -223,7 +224,9 @@ UPDATE
 	batch_job_execution
 SET
 	status = 'COMPLETED',
-	exit_code = 'COMPLETED'
+	exit_code = 'COMPLETED',
+	end_time = CURRENT_TIMESTAMP,
+	exit_message = 'Marked complete by SQL'
 WHERE
 	job_execution_id = -- [the job_execution_id of the record that is incomplete]
 ```
