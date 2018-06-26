@@ -5,13 +5,17 @@
 This document describes how to execute monitor and troubleshoot the [Item Synchronization Process](./item-sync.md) within an IMRT environment.
 
 ## Execution
-To execute the Item Synchronization Process, create a `POST` call to the `/sync` endpoint of the Item Ingest Service.  An example of such a call is shown below:
+To execute the Item Synchronization Process, create a `POST` call to the `/sync` endpoint of the Item Ingest Service.  The easiest way to execute the Item Synchronization Process is from a pod within the IMRT Kubernetes environment.  Steps are shown below:
 
-```
-curl -i -X POST "http://ap-imrt-iis-service/sync"
-```
+1. Log into a pod within the Kubernetes environment:  `kubectl exec -it <identifier of pod> /bin/sh`
+2. Run `curl -i -X POST "http://ap-imrt-iis-service/sync"`
+3. If the job was started successfully, a `200 OK` status will be returned.  The response payload will contain the job execution id and the job's status:
 
-The call shown above uses the name of the Item Ingest Service that Kubernetes recognizes.  That is, the IMRT Kubernetes environment has a service named `ap-imrt-iis-service`.  For additional details on Kubernetes services, refer to [this page](https://kubernetes.io/docs/concepts/services-networking/service/).  To execute the Item Synchronization Process from outside the IMRT Kubernetes environment, refer to the next section.
+	```json
+	{"jobExecutionId":6,"name":"itemSynchronizationJob","status":"STARTING"}
+	```
+
+For additional details on Kubernetes services, refer to [this page](https://kubernetes.io/docs/concepts/services-networking/service/).
 
 ### Execution Outside of the Kubernetes Environment
 The item synchronization process can be called from outside the Kubernetes environment, follow these steps:
