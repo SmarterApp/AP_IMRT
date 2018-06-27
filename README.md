@@ -14,6 +14,7 @@ IMRT is a suite of applications. These documents provide additional information 
 4. [Kubernetes Deployment Files](docs/kubernetes_deployment_files.md)
 5. [IMRT Application Configuration files](docs/config_files.md)
 6. [Release Notes](docs/release_notes.md)
+7. [Logging](docs/logging.md)
 
 ### Common Tasks
 * [Delete an Item](docs/delete-item.md)
