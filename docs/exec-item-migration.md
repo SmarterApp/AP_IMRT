@@ -58,7 +58,7 @@ curl -i -X POST -H "Authorization: Bearer a-bearer-token-uuid" "http://imrt-exam
 ```
 
 ## Monitoring
-The item data migration process writes information about its progres to the application's log file.  There are two methods for monitoring the item data migration process as it runs:
+The item data migration process writes information about its progres to the application's log file.  Details on the log entries that are recorded can be found [here](./logging.md).  There are two methods for monitoring the item data migration process as it runs:
 
 ### Follow Log Entries in Graylog
 Documentation on how to query Graylog can be found [here](http://docs.graylog.org/en/2.4/pages/queries.html).
