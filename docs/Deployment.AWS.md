@@ -402,7 +402,9 @@ If the access token is properly configured, the curl request will return a paylo
    </pre>
    * The value for `spring.rabbitmq.password` in the `ap-imrt-iis.yml` file on the selected branch in the config repo must match the rabbit password you set above, and must be encrypted with the `ENCRYPT_KEY` set for the configuration service. You can encrpyt a value on the configuration service as described above.  
    * Point the IIS and ISS applications at the new graylog server
-     * Edit `iis.yml` and `iss.yml` and set the value for the `GRAYLOG_HOST` parameter to match the domain name you created above, for exampl `imrt-graylog-dev.sbtds.org`
+     * Edit `iis.yml` and `iss.yml` and:
+		  * set the value for the `GRAYLOG_HOST` parameter to match the domain name you created above, for example `imrt-graylog-dev.sbtds.org`
+         * set the value of the `GRAYLOG_PORT` parameter to match the port the graylog server is listening on.  Default port for graylog is 12201
 * Verify that you see logs from both applications in the graylog web interface
    * Create the other application services
    <pre>
@@ -425,77 +427,6 @@ If the access token is properly configured, the curl request will return a paylo
    <pre>
    LoadBalancer Ingress:     af909e7b316b511e8b7d50a62d3a6aa8-729550325.us-east-2.elb.amazonaws.com
    </pre>
-
-#### Configure the GELF Logging Daemonset for Kubernetes
-* Open the `fluentd-gelf-logging.yml` in an editor and update the following lines:
-  * `name`:  Replace the `[replace ]` with a name that is meaningful and easy to identify when filtering in Graylog.  This value will appear as the "source" in Graylog messages.  Whatever you decide, be consistent between environments to simplify Graylog filtering.
-    * Examples:  `imrt-dev` for a development environment, `imrt-production` for a production environment
-  * `GELF_HOST value`: Set this to the IP address of the Graylog host that will receive IMRT's log messages
-    * Example:
-    
-    ```yaml
-    - name: GELF_HOST
-    - value: 127.0.0.1 # the external/accessible IP address for the Graylog instance
-    ```
-    
-* Example of a completed `fluentd-gelf-logging.yml` file:
-
-```yaml
-# Taken from https://github.com/xbernpa/fluentd-kubernetes-gelf/blob/master/kubernetes/fluentd-daemonset-gelf.yaml
-apiVersion: extensions/v1beta1
-kind: DaemonSet
-metadata:
-  name: imrt-example-gelf
-  namespace: kube-system
-  labels:
-    k8s-app: fluentd-gelf-logging
-    version: v1
-    kubernetes.io/cluster-service: "true"
-spec:
-  template:
-    metadata:
-      labels:
-        k8s-app: fluentd-gelf-logging
-        version: v1
-        kubernetes.io/cluster-service: "true"
-    spec:
-      nodeSelector:
-        kubernetes.io/role: node
-      containers:
-      - name: fluentd
-        image: xbernpa/fluentd-kubernetes-gelf
-        env:
-          - name: GELF_HOST
-            value: "123.456.789.012"  # external/accessiblg IP address for Graylog host
-          - name: GELF_PORT
-            value: "12201"
-          - name: GELF_PROTOCOL
-            value: "udp"
-        resources:
-          limits:
-            memory: 200Mi
-          requests:
-            cpu: 100m
-            memory: 200Mi
-        volumeMounts:
-        - name: varlog
-          mountPath: /var/log
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
-          readOnly: true
-      terminationGracePeriodSeconds: 30
-      volumes:
-      - name: varlog
-        hostPath:
-          path: /var/log
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
-```
-
-* Once satisifed, save the changes
-* Deploy the k8s GELF logging daemonset with the following command:
-  * `kubectl apply -f fluentd-gelf-logging.yml`
 
 #### Configure Domains
 To provide external access to the IMRT applications with AWS Route53, follow these steps in the AWS console:
@@ -578,6 +509,11 @@ Once IMRT has been fully deployed, the database should be synchronized with the 
 * Manually execute the item sync job on that pod.<pre>kubectl exec ap-imrt-iis-deployment-xxx -- curl -X POST -i "http://localhost:8080/sync"</pre>
 * Monitor the job using <pre>kubectl logs -f ap-imrt-iis-deployment-xxx</pre> and wait for it to complete.
 * Once the initial sync has completed, deploy the cron job to run it on a periodic basis. The yml file can be edited to modify the schedule as required.<pre>kubectl apply -f sync-cron.yml</pre>
+
+### Item Data Migration Job
+To ensure any new `imrt` database fields and/or tables are correctly populated, the item data migration process should be run.  The item data migration can be executed following the steps found [here](./exec-item-migration.md).
+
+**NOTE:** Unlike the Item Sync Job, this job does not have to be scheduled to run at regular intervals.
 
 ## Updating Applications
    * Updating applications is done via kubectl, which requires that kubectl is first configured to point to the cluster in question: <pre>kops export kubecfg --state s3://kops-imrt-dev-state-store --name dev.imrt.org</pre>
