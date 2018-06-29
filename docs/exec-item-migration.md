@@ -2,7 +2,7 @@
 
 [Go Back](../README.md)
 
-This document describes how to execute monitor and troubleshoot the [Item Data Migration Process](./item-sync.md) within an IMRT environment.
+This document describes how to execute monitor and troubleshoot the [Item Data Migration Process](./item-migration.md) within an IMRT environment.
 
 ## Execution
 To execute the Item Data Migration Process, create a `POST` call to the `/migrate` endpoint of the Item Ingest Service.  The easiest way to execute the Item Data Migration Process is from a pod within the IMRT Kubernetes environment.  Steps are shown below:

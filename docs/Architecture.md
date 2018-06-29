@@ -11,3 +11,4 @@ This document explains the IMRT schema.
 The item synchronization process is an endpoint in the system that can be used to sync IMRT manually with the itembank.
 
 ### [Item Data Migration Process](item-migration.md)
+The item data migration process is an endpoint in the system that can be used to update new fields and/or tables introduced into the IMRT database with data from the itembank.
