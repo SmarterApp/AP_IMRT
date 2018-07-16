@@ -1,4 +1,11 @@
 # AWS Deployment for IMRT
+
+[Go Back](../README.md)
+
+> # _Deprecation Notice_
+> **_IMPORTANT:_** Since IMRT has merged deployment environments with IAT, these deployment instructions are outdated.  **Current Deployment instructions for the IMRT applications/services can be found here in [IAT's Installation Guide](https://github.com/SmarterApp/AP_Deploy_Stage/blob/master/InstallationGuide.md)**.
+
+
 ## Table Of Contents
 * [Upgrading](#upgrading)
 * [Deployment Instructions](#deployment-instructions)

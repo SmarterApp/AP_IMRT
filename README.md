@@ -10,7 +10,7 @@ IMRT is a suite of applications. These documents provide additional information 
 
 1. [Main README (this file)](README.md)
 2. [Architecture](docs/Architecture.md)
-3. [Deployment Checklist](docs/Deployment.AWS.md)
+3. [Deployment Checklist](docs/Deployment.AWS.md) (_**Deprecated - refer to [IAT Installation Guide](https://github.com/SmarterApp/AP_Deploy_Stage/blob/master/InstallationGuide.md)**_)
 4. [Kubernetes Deployment Files](docs/kubernetes_deployment_files.md)
 5. [IMRT Application Configuration files](docs/config_files.md)
 6. [Release Notes](docs/release_notes.md)
