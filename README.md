@@ -25,6 +25,7 @@ IMRT is a suite of applications. These documents provide additional information 
 * [Using the Kubernetes Bastion](docs/k8s-bastion-usage.md)
 * [Running and Monitoring the Item Synchronization Process](docs/exec-item-sync.md)
 * [Running and Monitoring the Item Data Migration Process](docs/exec-item-migration.md)
+* [Abandon a Running Job](docs/abandon-running-job.md)
 
 
 ## License
