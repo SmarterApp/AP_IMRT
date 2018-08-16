@@ -1,24 +1,95 @@
+/******************************************************************************
+**	
+**	File:			load-items-into-db.sql
+**
+**	Description:	Load a batch of items into the imrt database.  The process
+**					for creating an item is:
+**
+**					1. Select a random item from the item table
+**					2. Assign that item a new id
+**					3. Insert the item with the newly assigned id into the item
+**					   table (and any child tables)
+**
+** NOTES
+** ----------------------------------------------------------------------------
+** * This script depends on a "populated" imrt dataabase.  That is, there must
+**   be at least one row in the item table
+**
+** * This script can take a very long time to run (on a local Postgres server)
+**
+** * Items created by this script will have the `item_created_by` field set to
+**   'load test script' so they can be easily identified amongst other
+**
+******************************************************************************/
 DO $$
 DECLARE 
 	numberOfItemsToCreate INTEGER := 10000;
-	newItemId INTEGER;
+	newItemId INTEGER := 0;
 	newItemKey INTEGER;
 	itemRow item%ROWTYPE;
 BEGIN
 	FOR i IN 1 .. numberOfItemsToCreate 
 	LOOP
-		SELECT MAX(id) + 1 INTO newItemId FROM item;
-
-		SELECT 
-			*
-		INTO 
-			itemRow 
-		FROM 
-			item 
-		ORDER BY 
-			RANDOM() 
-		LIMIT 1;
+		IF newItemId = 0 THEN
+			SELECT max(id) INTO newItemId FROM item;
+		END IF;
 		
+		newItemId := newItemId + 1;
+
+		IF i % 3 = 0 THEN -- select an item that has an attachment
+			SELECT 
+				it.*
+			INTO 
+				itemRow 
+			FROM 
+				item it
+			JOIN
+				item_attachment att
+				ON (it.key = att.item_key)
+			OFFSET
+				floor(random() * 1000)
+			LIMIT 1;
+		ELSEIF i % 5 = 0 THEN -- select an item that has a form
+			SELECT 
+				it.*
+			INTO 
+				itemRow 
+			FROM 
+				item it
+			JOIN
+				item_form frm
+				ON (it.key = frm.item_key)
+			OFFSET
+				floor(random() * 1000)
+			LIMIT 1;
+		ELSEIF i % 3 = 0 AND i % 5 = 0 THEN -- select an item that has an attachment and form
+			SELECT 
+				it.*
+			INTO 
+				itemRow 
+			FROM 
+				item it
+			JOIN
+				item_attachment att
+				ON (it.key = att.item_key)
+			JOIN
+				item_form frm
+				ON (it.key = frm.item_key)
+			OFFSET
+				floor(random() * 1000)
+			LIMIT 1;
+		ELSE -- select an item at random
+			SELECT 
+				*
+			INTO 
+				itemRow 
+			FROM 
+				item
+			OFFSET
+				floor(random() * 1000)
+			LIMIT 1;
+		END IF;
+
 		INSERT INTO item(id, 
 			subject, 
 			grade, 
