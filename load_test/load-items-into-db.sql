@@ -23,11 +23,25 @@
 ******************************************************************************/
 DO $$
 DECLARE 
-	numberOfItemsToCreate INTEGER := 10000;
+	numberOfItemsToCreate INTEGER := 200000;
 	newItemId INTEGER := 0;
 	newItemKey INTEGER;
+	maxItemOffset INTEGER;
+	maxItemAttachmentOffset INTEGER;
+	maxItemFormOffset INTEGER;
+	maxItemAttachmentAndFormOffset INTEGER;
 	itemRow item%ROWTYPE;
 BEGIN
+	SELECT COUNT(*) INTO maxItemOffset FROM item;
+	SELECT COUNT(*) INTO maxItemAttachmentOffset FROM item_attachment;
+	SELECT COUNT(*) INTO maxItemFormOffset FROM item_form;
+	
+	IF maxItemAttachmentOffset < maxItemFormOffset THEN
+		maxItemAttachmentAndFormOffset := maxItemAttachmentOffset;
+	ELSE
+		maxItemAttachmentAndFormOffset := maxItemFormOffset;
+	END IF;
+	
 	FOR i IN 1 .. numberOfItemsToCreate 
 	LOOP
 		IF newItemId = 0 THEN
@@ -47,7 +61,7 @@ BEGIN
 				item_attachment att
 				ON (it.key = att.item_key)
 			OFFSET
-				floor(random() * 1000)
+				floor(random() * maxItemAttachmentOffset)
 			LIMIT 1;
 		ELSEIF i % 5 = 0 THEN -- select an item that has a form
 			SELECT 
@@ -60,7 +74,7 @@ BEGIN
 				item_form frm
 				ON (it.key = frm.item_key)
 			OFFSET
-				floor(random() * 1000)
+				floor(random() * maxItemFormOffset)
 			LIMIT 1;
 		ELSEIF i % 3 = 0 AND i % 5 = 0 THEN -- select an item that has an attachment and form
 			SELECT 
@@ -76,7 +90,7 @@ BEGIN
 				item_form frm
 				ON (it.key = frm.item_key)
 			OFFSET
-				floor(random() * 1000)
+				floor(random() * maxItemAttachmentAndFormOffset)
 			LIMIT 1;
 		ELSE -- select an item at random
 			SELECT 
@@ -86,7 +100,7 @@ BEGIN
 			FROM 
 				item
 			OFFSET
-				floor(random() * 1000)
+				floor(random() * maxItemOffset)
 			LIMIT 1;
 		END IF;
 
