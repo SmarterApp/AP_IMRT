@@ -5,30 +5,9 @@
       <stringProp name="TestPlan.comments"></stringProp>
       <boolProp name="TestPlan.functional_mode">false</boolProp>
       <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
-      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">true</boolProp>
       <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
-        <collectionProp name="Arguments.arguments">
-          <elementProp name="concurrentRequests" elementType="Argument">
-            <stringProp name="Argument.name">concurrentRequests</stringProp>
-            <stringProp name="Argument.value">100</stringProp>
-            <stringProp name="Argument.metadata">=</stringProp>
-          </elementProp>
-          <elementProp name="issSearchUrl" elementType="Argument">
-            <stringProp name="Argument.name">issSearchUrl</stringProp>
-            <stringProp name="Argument.value">http://iss-fw-loadtest.sbtds.org/v1/items/search</stringProp>
-            <stringProp name="Argument.metadata">=</stringProp>
-          </elementProp>
-          <elementProp name="issCountUrl" elementType="Argument">
-            <stringProp name="Argument.name">issCountUrl</stringProp>
-            <stringProp name="Argument.value">http://iss-fw-loadtest.sbtds.org/v1/items/count</stringProp>
-            <stringProp name="Argument.metadata">=</stringProp>
-          </elementProp>
-          <elementProp name="ssoUrl" elementType="Argument">
-            <stringProp name="Argument.name">ssoUrl</stringProp>
-            <stringProp name="Argument.value">https://sso-deployment.sbtds.org:443/auth/oauth2/access_token?realm=/sbac</stringProp>
-            <stringProp name="Argument.metadata">=</stringProp>
-          </elementProp>
-        </collectionProp>
+        <collectionProp name="Arguments.arguments"/>
       </elementProp>
       <stringProp name="TestPlan.user_define_classpath"></stringProp>
     </TestPlan>
@@ -37,32 +16,32 @@
         <collectionProp name="Arguments.arguments">
           <elementProp name="concurrentUsers" elementType="Argument">
             <stringProp name="Argument.name">concurrentUsers</stringProp>
-            <stringProp name="Argument.value">1</stringProp>
+            <stringProp name="Argument.value">5</stringProp>
             <stringProp name="Argument.desc">The number of concurrent search requests that should be excuted against ISS</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="loopCount" elementType="Argument">
             <stringProp name="Argument.name">loopCount</stringProp>
-            <stringProp name="Argument.value">1000</stringProp>
+            <stringProp name="Argument.value">1</stringProp>
             <stringProp name="Argument.desc">The number of times the test should be run</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
-          <elementProp name="issBaseUrl" elementType="Argument">
-            <stringProp name="Argument.name">issBaseUrl</stringProp>
-            <stringProp name="Argument.value">http://iss-fw-loadtest.sbtds.org/v1/items/</stringProp>
+          <elementProp name="issDomain" elementType="Argument">
+            <stringProp name="Argument.name">issDomain</stringProp>
+            <stringProp name="Argument.value">iss-fw-loadtest.sbtds.org</stringProp>
             <stringProp name="Argument.desc">The base URL for the ISS load test environment</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
-          <elementProp name="issSearchUrli" elementType="Argument">
-            <stringProp name="Argument.name">issSearchUrli</stringProp>
-            <stringProp name="Argument.value">${issBaseUrl} + &quot;search&quot;</stringProp>
-            <stringProp name="Argument.desc">The URL for executing search requests against the ISS load test environment</stringProp>
+          <elementProp name="issSearchPath" elementType="Argument">
+            <stringProp name="Argument.name">issSearchPath</stringProp>
+            <stringProp name="Argument.value">v1/items/search</stringProp>
+            <stringProp name="Argument.desc">The URL path for executing search requests against the ISS load test environment</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
-          <elementProp name="issCountUrl" elementType="Argument">
-            <stringProp name="Argument.name">issCountUrl</stringProp>
-            <stringProp name="Argument.value">${issbaseUrl} + &quot;count&quot;</stringProp>
-            <stringProp name="Argument.desc">The URL for execuing count requests against the ISS load test environment</stringProp>
+          <elementProp name="issCountPath" elementType="Argument">
+            <stringProp name="Argument.name">issCountPath</stringProp>
+            <stringProp name="Argument.value">v1/items/count</stringProp>
+            <stringProp name="Argument.desc">The URL path for execuing count requests against the ISS load test environment</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="ssoDomain" elementType="Argument">
@@ -110,7 +89,8 @@
         </collectionProp>
       </Arguments>
       <hashTree/>
-      <SetupThreadGroup guiclass="SetupThreadGroupGui" testclass="SetupThreadGroup" testname="001 - Get SSO Auth Token" enabled="true">
+      <SetupThreadGroup guiclass="SetupThreadGroupGui" testclass="SetupThreadGroup" testname="SSO - Get Access Token" enabled="true">
+        <stringProp name="TestPlan.comments">Make a call to OpenAM to get an access token one time before executing search requests; in practice a request from IAT will already have an access token that will be sent along in the header</stringProp>
         <stringProp name="ThreadGroup.on_sample_error">stoptestnow</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
@@ -123,7 +103,7 @@
         <stringProp name="ThreadGroup.delay"></stringProp>
       </SetupThreadGroup>
       <hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST SSO Access Token Request" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="SSO Access Token Request" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments">
               <elementProp name="grant_type" elementType="HTTPArgument">
@@ -176,19 +156,22 @@
           <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
           <stringProp name="HTTPSampler.connect_timeout"></stringProp>
           <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          <stringProp name="TestPlan.comments">POST to OpenAM for an access token</stringProp>
         </HTTPSamplerProxy>
         <hashTree/>
         <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="Extract SSO Access Token from Response" enabled="true">
           <stringProp name="JSONPostProcessor.referenceNames">ssoAccessToken</stringProp>
           <stringProp name="JSONPostProcessor.jsonPathExprs">$.access_token</stringProp>
           <stringProp name="JSONPostProcessor.match_numbers">1</stringProp>
+          <stringProp name="TestPlan.comments">Get the access_token value from the SSO response payload</stringProp>
+          <stringProp name="Scope.variable">ssoAccessToken</stringProp>
         </JSONPostProcessor>
         <hashTree/>
         <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Verify access token was received" enabled="true">
           <collectionProp name="Asserion.test_strings">
             <stringProp name="-914793855">[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}</stringProp>
           </collectionProp>
-          <stringProp name="Assertion.custom_message">Could not get auth token</stringProp>
+          <stringProp name="Assertion.custom_message">Could not get auth token from SSO</stringProp>
           <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
           <boolProp name="Assertion.assume_success">false</boolProp>
           <intProp name="Assertion.test_type">1</intProp>
@@ -196,7 +179,15 @@
           <stringProp name="Scope.variable">ssoAccessToken</stringProp>
         </ResponseAssertion>
         <hashTree/>
-        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="Results Tree" enabled="true">
+        <BeanShellAssertion guiclass="BeanShellAssertionGui" testclass="BeanShellAssertion" testname="Set ssoAccessToken Property" enabled="true">
+          <stringProp name="TestPlan.comments">Set an ssoAccessToken property, which allows the access token to be used by other thread groups in this load test</stringProp>
+          <stringProp name="BeanShellAssertion.query">${__setProperty(ssoAccessToken,${ssoAccessToken})}</stringProp>
+          <stringProp name="BeanShellAssertion.filename"></stringProp>
+          <stringProp name="BeanShellAssertion.parameters"></stringProp>
+          <boolProp name="BeanShellAssertion.resetInterpreter">false</boolProp>
+        </BeanShellAssertion>
+        <hashTree/>
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="Results of SSO Access Token Request" enabled="true">
           <boolProp name="ResultCollector.error_logging">false</boolProp>
           <objProp>
             <name>saveConfig</name>
@@ -233,19 +224,139 @@
         </ResultCollector>
         <hashTree/>
       </hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="002 - Execute Searches" enabled="false">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="ISS - Execute Search Requests" enabled="true">
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
-          <stringProp name="LoopController.loops">${loopCount}</stringProp>
+          <stringProp name="LoopController.loops">1</stringProp>
         </elementProp>
         <stringProp name="ThreadGroup.num_threads">${concurrentUsers}</stringProp>
         <stringProp name="ThreadGroup.ramp_time">1</stringProp>
         <boolProp name="ThreadGroup.scheduler">false</boolProp>
         <stringProp name="ThreadGroup.duration"></stringProp>
         <stringProp name="ThreadGroup.delay"></stringProp>
+        <boolProp name="ThreadGroup.delayedStart">true</boolProp>
       </ThreadGroup>
-      <hashTree/>
+      <hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Filter Payload Builder" enabled="false">
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="filename">/Users/jeffjohnson/dev/sbac/git/imrt/AP_IMRT/load_test/assets/search-payload-builder.js</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="script"></stringProp>
+          <stringProp name="scriptLanguage">javascript</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Search - ISS Search Request" enabled="true">
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">{&#xd;
+	&quot;filters&quot;: [&#xd;
+		{&#xd;
+			&quot;property&quot;: &quot;id&quot;,&#xd;
+			&quot;values&quot;: [207021]&#xd;
+		}&#xd;
+	],&#xd;
+	&quot;sort&quot;: {&#xd;
+		&quot;property&quot;: &quot;id&quot;,&#xd;
+		&quot;direction&quot;: &quot;asc&quot;&#xd;
+	},&#xd;
+	&quot;page&quot;: {&#xd;
+		&quot;pageSize&quot;: 10,&#xd;
+		&quot;pageNumber&quot;: 0&#xd;
+	}&#xd;
+}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">${issDomain}</stringProp>
+          <stringProp name="HTTPSampler.port"></stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+          <stringProp name="HTTPSampler.path">${issSearchPath}</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+          <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+          <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+          <stringProp name="HTTPSampler.response_timeout"></stringProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="ISS Header Manager" enabled="true">
+            <collectionProp name="HeaderManager.headers">
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">Content-Type</stringProp>
+                <stringProp name="Header.value">application/json</stringProp>
+              </elementProp>
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">Authorization</stringProp>
+                <stringProp name="Header.value">Bearer ${__property(ssoAccessToken)}</stringProp>
+              </elementProp>
+            </collectionProp>
+          </HeaderManager>
+          <hashTree/>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Assert HTTP Status == 200" enabled="true">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="49586">200</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message"></stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+            <boolProp name="Assertion.assume_success">false</boolProp>
+            <intProp name="Assertion.test_type">8</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+          <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="Assert results Exists in Response Payload" enabled="true">
+            <stringProp name="JSON_PATH">$.results</stringProp>
+            <stringProp name="EXPECTED_VALUE"></stringProp>
+            <boolProp name="JSONVALIDATION">false</boolProp>
+            <boolProp name="EXPECT_NULL">false</boolProp>
+            <boolProp name="INVERT">false</boolProp>
+            <boolProp name="ISREGEX">false</boolProp>
+          </JSONPathAssertion>
+          <hashTree/>
+        </hashTree>
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+      </hashTree>
     </hashTree>
   </hashTree>
 </jmeterTestPlan>
