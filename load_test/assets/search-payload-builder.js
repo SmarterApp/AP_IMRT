@@ -184,6 +184,8 @@ var SearchPayloadBuilder = function () {
                 }
                 break;
             case "dateRange":
+                filter.from = getRandomDate(new Date(2018, 0, 1), 100);
+                filter.to = getRandomDate(filter.from, 100);
                 break;
             default:
                 break;
@@ -215,6 +217,17 @@ var SearchPayloadBuilder = function () {
      */
     getRandomIntFromInterval = function(min, max) {
         return Math.floor(Math.random() * (max - min + 1) + min);
+    },
+
+    /**
+     * Get a random date within a certain number of days after the provided start date
+     *
+     * @param  {Date} startDate      The minimum date after which the random date should be generated
+     * @param  {Number} numberOfDays The maximum number of days after the start date the random date can be
+     * @return {Date}                A date between the start date and start date + number of days
+     */
+    getRandomDate = function(startDate, numberOfDays) {
+        return new Date(startDate.getTime() + (Math.random() * numberOfDays * 24 * 60 * 60 * 1000));
     };
 
     return {
