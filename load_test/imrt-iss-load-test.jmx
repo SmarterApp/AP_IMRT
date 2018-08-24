@@ -16,14 +16,14 @@
         <collectionProp name="Arguments.arguments">
           <elementProp name="concurrentUsers" elementType="Argument">
             <stringProp name="Argument.name">concurrentUsers</stringProp>
-            <stringProp name="Argument.value">5</stringProp>
-            <stringProp name="Argument.desc">The number of concurrent search requests that should be excuted against ISS</stringProp>
+            <stringProp name="Argument.value">50</stringProp>
+            <stringProp name="Argument.desc">The number of concurrent search requests that should be excuted against ISS.  Used in &quot;ISS - Execute Search Request&quot; as number of threads</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="loopCount" elementType="Argument">
             <stringProp name="Argument.name">loopCount</stringProp>
             <stringProp name="Argument.value">1</stringProp>
-            <stringProp name="Argument.desc">The number of times the test should be run</stringProp>
+            <stringProp name="Argument.desc">The number of times the test should be run.  Used in &quot;ISS - Execute Search Request&quot; as loop count</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="issDomain" elementType="Argument">
@@ -228,7 +228,7 @@
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
-          <stringProp name="LoopController.loops">1</stringProp>
+          <stringProp name="LoopController.loops">${loopCount}</stringProp>
         </elementProp>
         <stringProp name="ThreadGroup.num_threads">${concurrentUsers}</stringProp>
         <stringProp name="ThreadGroup.ramp_time">1</stringProp>
@@ -238,7 +238,7 @@
         <boolProp name="ThreadGroup.delayedStart">true</boolProp>
       </ThreadGroup>
       <hashTree>
-        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Filter Payload Builder" enabled="false">
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Filter Payload Builder" enabled="true">
           <stringProp name="cacheKey">true</stringProp>
           <stringProp name="filename">/Users/jeffjohnson/dev/sbac/git/imrt/AP_IMRT/load_test/assets/search-payload-builder.js</stringProp>
           <stringProp name="parameters"></stringProp>
@@ -252,22 +252,7 @@
             <collectionProp name="Arguments.arguments">
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">{&#xd;
-	&quot;filters&quot;: [&#xd;
-		{&#xd;
-			&quot;property&quot;: &quot;id&quot;,&#xd;
-			&quot;values&quot;: [207021]&#xd;
-		}&#xd;
-	],&#xd;
-	&quot;sort&quot;: {&#xd;
-		&quot;property&quot;: &quot;id&quot;,&#xd;
-		&quot;direction&quot;: &quot;asc&quot;&#xd;
-	},&#xd;
-	&quot;page&quot;: {&#xd;
-		&quot;pageSize&quot;: 10,&#xd;
-		&quot;pageNumber&quot;: 0&#xd;
-	}&#xd;
-}</stringProp>
+                <stringProp name="Argument.value">${searchPayload}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
             </collectionProp>
@@ -321,6 +306,42 @@
           <hashTree/>
         </hashTree>
         <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+        <ResultCollector guiclass="TableVisualizer" testclass="ResultCollector" testname="View Results in Table" enabled="true">
           <boolProp name="ResultCollector.error_logging">false</boolProp>
           <objProp>
             <name>saveConfig</name>
