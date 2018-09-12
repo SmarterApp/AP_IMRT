@@ -74,6 +74,8 @@ The **Report Worksheet** is split into five "regions".  Only the **Desired** col
 * **Actual:** This is the total number of items that satisfy the search filter criteria for the specified groups.  Figure 4 shows the total number of items in the itembank database for ESBR items for Grade 3 with a Primary Target of 2 in the ELA subject:
 * **Actual 1 - Actual 5:** Shows the total number of items for that Item Difficulty Quintile level.  For example, the **Actual 2** column shows the number of items with an Item Difficulty Quintile of 2.
 
+_**NOTE:**_  The actual counts do not include Stimulus or Tutorial items.
+
 ![Actual items](../assets/images/gap-report-ws-actual-items-count.png)
 
 **Figure 4**
