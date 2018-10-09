@@ -1,4 +1,11 @@
+# This project is no longer maintained and documentation has been moved to the components.
+
+* [Item Ingest Service](https://github.com/SmarterApp/AP_IMRT_ItemIngestService)
+* [Item Search Service](https://github.com/SmarterApp/AP_IMRT_ItemSearchService)
+
+
 # IMRT
+
 The Item Metadata Reporting Tool (IMRT) is a repository of item data.
 
 **Intended Audience**: this document serves as a convenient entry point to all things IMRT. Anybody interested in developing, deploying or maintaining the IMRT project should start here. That includes developers, operations, system administrators, tier 3 support, etc.
